@@ -1,0 +1,79 @@
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import pizzaImg from "@/assets/pizza.png"
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Dialog } from "./Dialog"
+
+export interface OrderItem {
+  name?: string,
+  price: number,
+  quantity: number,
+  size: string
+}
+
+interface OrderCardProps {
+  id: number,
+    status: string,
+    price: number,
+    items: OrderItem[]
+}
+
+interface Order {
+  order: OrderCardProps
+}
+
+
+export function OrderCard({order}: Order) {
+  const getStatusColor = (status: string) => {
+    return status === "Pending" ? "bg-yellow-500 text-black" :
+            status === "Finished" ? "bg-green-500 text-black" : "bg-red-500 text-black"
+  }
+
+  return (
+    <Card className="relative mx-auto w-full max-w-sm pt-0">
+      <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
+      <img
+        src={pizzaImg}
+        alt="Event cover"
+        className="relative z-20 aspect-video w-full object-cover"
+      />
+      <CardHeader>
+        <CardAction>
+          <Badge variant="secondary" className={getStatusColor(order.status)}>{order.status}</Badge>
+        </CardAction>
+        <CardTitle>Pedido #{order.id}</CardTitle>
+        <CardDescription>
+          {order.items && order.items.length > 0 ? (
+            <ul className="mt-2 space-y-1">
+              {order.items.map((item, index) => (
+                <li key={index} className="text-sm">
+                  {item.quantity}x {item.name} ({item.size})
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span className="block mt-2">Nenhum item encontrado</span>
+          )}
+          <div className="mt-4 font-bold text-foreground">
+            Total: R$ {order.price.toFixed(2)}
+          </div>
+        </CardDescription>
+      </CardHeader>
+      <CardFooter>
+        <Dialog isDisabled={order.status === "Finished" || order.status === "Cancelled"}>
+            <Button className="w-full" disabled={order.status === "Finished" || order.status === "Cancelled"}>{
+          order.status === "Pending"  ? "Finalizar ou Cancelar" : order.status === "Finished" ? "Entregue" : "Cancelado"
+          }</Button>
+        </Dialog>
+
+      </CardFooter>
+    </Card>
+  )
+}
