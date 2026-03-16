@@ -1,13 +1,18 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "./layout";
 import { Home } from "./Pages/Home";
-import { CreateProduct } from "./Pages/CreateProduct";
+import { Orders } from "./Pages/Orders";
 import { SignIn } from "./Pages/SignIn";
+import { SignUp } from "./Pages/SignUp";
 
 export const router = createBrowserRouter([
       {
         path: "/",
         element: <SignIn />,
+      },
+      {
+        path: "/register",
+        element: <SignUp />,
       },
       {
         path: "/home",
@@ -19,8 +24,8 @@ export const router = createBrowserRouter([
             element: <Home />,
           },
           {
-            path: "/home/create-product",
-            element: <CreateProduct />,
+            path: "/home/orders",
+            element: <Orders />,
           }
         ],
       },

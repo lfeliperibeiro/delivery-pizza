@@ -43,10 +43,10 @@ export function Sidebar(){
     </SidebarMenu>
     <SidebarMenu className="flex flex-col gap-2">
       <SidebarMenuItem>
-            <SidebarMenuButton isActive={location.pathname === "/home/create-product"}>
-              <Link to="/home/create-product" className="flex items-center gap-2">
+            <SidebarMenuButton isActive={location.pathname === "/home/orders"}>
+              <Link to="/home/orders" className="flex items-center gap-2">
                 <AdminIcon />
-                <span className="text-md font-bold">Adicionar Pizza</span>
+                <span className="text-md font-bold">Pedidos</span>
               </Link>
             </SidebarMenuButton>
       </SidebarMenuItem>
