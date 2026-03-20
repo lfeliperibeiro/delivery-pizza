@@ -6,3 +6,19 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const detail = error?.response?.data?.detail
+
+    if (detail === "Invalid token") {
+      // Notify the app shell to logout (no React hooks here).
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth:invalid-token"))
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)

@@ -16,7 +16,7 @@ export function OrderList() {
   async function fetchOrders(): Promise<OrderTableProps[]> {
     const token = localStorage.getItem("access_token")
     try {
-      const response = await api.get("/orderslist", {
+      const response = await api.get("/orders/list", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

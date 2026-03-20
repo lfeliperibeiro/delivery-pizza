@@ -1,7 +1,8 @@
 import { api } from "@/api"
 import { Loading } from "@/components/Loading";
 import { OrderCard, type OrderItem } from "@/components/OrderCard"
-import { use, useState, Suspense } from "react"
+import { use, useState, Suspense, useMemo, useCallback } from "react"
+import { Toaster } from "sonner";
 
 interface Order {
   id: number,
@@ -32,8 +33,22 @@ async function fetchOrders(): Promise<Order[]> {
   }
 }
 
-function OrderGrid({ ordersPromise }: { ordersPromise: Promise<Order[]> }) {
+function OrderGrid({
+  ordersPromise,
+  onRefetch,
+}: {
+  ordersPromise: Promise<Order[]>
+  onRefetch: () => void
+}) {
   const orders = use(ordersPromise)
+
+  const sortedOrders = useMemo(() => {
+    return orders.slice().sort((a, b) => {
+      if (a.status === "Pending" && b.status !== "Pending") return -1;
+      if (a.status !== "Pending" && b.status === "Pending") return 1;
+      return 0;
+    });
+  }, [orders]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full h-full">
@@ -42,24 +57,35 @@ function OrderGrid({ ordersPromise }: { ordersPromise: Promise<Order[]> }) {
           No orders found.
         </div>
       ) : (
-        orders.map((order) => (
-          <OrderCard key={order.id} order={order} />
+        sortedOrders.map((order) => (
+          <OrderCard key={order.id} order={order} onRefetch={onRefetch} />
         ))
       )}
     </div>
   )
 }
 
-export function Home(){
-  const [ordersPromise] = useState(() => fetchOrders())
+export function Home() {
+  const [ordersPromise, setOrdersPromise] = useState<Promise<Order[]>>(() =>
+    fetchOrders(),
+  )
+
+  const refetchOrders = useCallback(() => {
+    setOrdersPromise(fetchOrders())
+  }, [])
 
   return (
-    <Suspense fallback={
-      <div className="flex h-full w-full items-center justify-center p-8 text-muted-foreground">
-        <Loading/>
-      </div>
-    }>
-      <OrderGrid ordersPromise={ordersPromise} />
-    </Suspense>
+    <>
+      <Suspense
+        fallback={
+          <div className="flex h-full w-full items-center justify-center p-8 text-muted-foreground">
+            <Loading />
+          </div>
+        }
+      >
+        <OrderGrid ordersPromise={ordersPromise} onRefetch={refetchOrders} />
+      </Suspense>
+      <Toaster />
+    </>
   )
 }

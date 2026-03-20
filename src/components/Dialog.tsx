@@ -7,30 +7,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 interface DialogProps {
-  children: React.ReactNode
-  isDisabled: boolean
+  onFinalize: () => void
+  onCancel: () => void
+  openModal: boolean
+  setOpenModal: (open: boolean) => void
 }
-export function Dialog({children, isDisabled}: DialogProps) {
+export function Dialog({ openModal, setOpenModal, onFinalize, onCancel}: DialogProps) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger disabled={isDisabled}>
-        {children}
-      </AlertDialogTrigger>
+    <AlertDialog open={openModal} onOpenChange={setOpenModal}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Cancelar ou Finalizar Pedido?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account from our servers.
+            Esta ação não pode ser desfeita. Esta ação irá finalizar ou cancelar o pedido.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction variant={"secondary"} onClick={onFinalize}>Finalizar</AlertDialogAction>
+          <AlertDialogAction variant={"destructive"} onClick={onCancel}>Cancelar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

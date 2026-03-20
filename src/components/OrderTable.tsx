@@ -12,7 +12,9 @@ import { Badge } from "./ui/badge"
 
 export interface OrderTableProps {
   id: number
-  user: number
+  user: {
+    name: string
+  }
   price: number
   status: string
 }
@@ -47,7 +49,7 @@ export function OrderTable({ orders }: { orders: OrderTableProps[] }) {
         {orders.map((order) => (
           <TableRow key={order.id}>
             <TableCell className="font-medium">{order.id}</TableCell>
-            <TableCell>{order.user}</TableCell>
+            <TableCell>{order.user.name}</TableCell>
             <TableCell>
               {order.price.toLocaleString("pt-BR", {
                 style: "currency",
