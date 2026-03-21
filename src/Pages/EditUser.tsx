@@ -1,9 +1,9 @@
 import { api } from "@/api"
-import { Checkbox } from "@/components/CheckBox"
+import { Checkbox } from "@/components/Checkbox"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useEffect, useState } from "react"
+import { Suspense, use, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast, Toaster } from "sonner"
 
@@ -27,35 +27,38 @@ function extractUserFromResponse(data: unknown): UserData | null {
   }
 }
 
-export function EditUser() {
-  const { id } = useParams<{ id: string }>()
-  const [userData, setUserData] = useState<UserData>({
-    name: "",
-    email: "",
-    active: false,
-    admin: false,
-  })
-  const [loading, setLoading] = useState(true)
+const EMPTY_USER: UserData = {
+  name: "",
+  email: "",
+  active: false,
+  admin: false,
+}
+
+async function fetchUserData(id: string): Promise<UserData> {
+  const token = localStorage.getItem("access_token")
+  if (!token) return EMPTY_USER
+
+  try {
+    const response = await api.get(`/users/user/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return extractUserFromResponse(response.data) ?? EMPTY_USER
+  } catch {
+    toast.error("Erro ao carregar usuário")
+    return EMPTY_USER
+  }
+}
+
+function EditUserForm({
+  id,
+  userPromise,
+}: {
+  id: string
+  userPromise: Promise<UserData>
+}) {
   const navigate = useNavigate()
-  useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!id || !token) {
-      queueMicrotask(() => setLoading(false))
-      return
-    }
-    api
-      .get(`/users/user/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((response) => {
-        const parsed = extractUserFromResponse(response.data)
-        if (parsed) setUserData(parsed)
-      })
-      .catch(() => {
-        toast.error("Erro ao carregar usuário")
-      })
-      .finally(() => setLoading(false))
-  }, [id])
+  const initialUserData = use(userPromise)
+  const [userData, setUserData] = useState<UserData>(initialUserData)
 
   function handleEditUser(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -64,33 +67,28 @@ export function EditUser() {
       toast.error("Faça login para editar usuário")
       return
     }
-    if (!id) return
 
-    api.put(`/users/user/${id}`, {
-      name: userData.name,
-      email: userData.email,
-      active: userData.active,
-      admin: userData.admin,
+    api.put(
+      `/users/user/${id}`,
+      {
+        name: userData.name,
+        email: userData.email,
+        active: userData.active,
+        admin: userData.admin,
       },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-    ).then(() => {
-      toast.success("Usuário editado com sucesso")
-      setTimeout(() => navigate("/users"), 2000)
-    }).catch(() => {
-      toast.error("Erro ao editar usuário")
-    })
-  }
-
-  if (loading) {
-    return (
-      <Card className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
-        <p className="text-muted-foreground">Carregando usuário...</p>
-      </Card>
     )
+      .then(() => {
+        toast.success("Usuário editado com sucesso")
+        setTimeout(() => navigate("/users"), 2000)
+      })
+      .catch(() => {
+        toast.error("Erro ao editar usuário")
+      })
   }
 
   return (
@@ -105,11 +103,38 @@ export function EditUser() {
         </div>
         <div className="flex flex-col gap-4 w-full">
           <Checkbox id="active" name="active" label="Usuário Ativo" checked={userData.active} onChange={(checked) => setUserData({ ...userData, active: checked })} />
-          <Checkbox id="admin" name="admin" label="Usuário Admin" checked={userData.admin} onChange={(checked) => setUserData({ ...userData, admin: checked })} />
+          <Checkbox  id="admin" name="admin" label="Usuário Admin" checked={userData.admin} onChange={(checked) => setUserData({ ...userData, admin: checked })} />
         </div>
         <Button type="submit">Editar Usuário</Button>
       </form>
       <Toaster />
     </Card>
+  )
+}
+
+export function EditUser() {
+  const { id } = useParams<{ id: string }>()
+  const [userPromise] = useState<Promise<UserData>>(() =>
+    fetchUserData(id ?? ""),
+  )
+
+  if (!id) {
+    return (
+      <Card className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+        <p className="text-muted-foreground">Usuário inválido.</p>
+      </Card>
+    )
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <Card className="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+          <p className="text-muted-foreground">Carregando usuário...</p>
+        </Card>
+      }
+    >
+      <EditUserForm id={id} userPromise={userPromise} />
+    </Suspense>
   )
 }

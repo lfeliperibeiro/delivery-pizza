@@ -22,6 +22,7 @@ export function Checkbox({ id, name, label, checked, onChange }: CheckboxProps) 
           name={name}
           checked={checked}
           onCheckedChange={(value) => onChange(Boolean(value))}
+          className="data-checked:text-amber-50! data-checked:bg-orange-400! data-checked:border-orange-400!"
         />
         <Label htmlFor={id}>{label}</Label>
       </Field>

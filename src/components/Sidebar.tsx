@@ -7,10 +7,8 @@ import {
   SidebarMenu} from "./ui/sidebar"
 import { LogoImg } from "@/assets/logo"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { HomeImg } from "@/assets/home_img"
-import { SignOutImg } from "@/assets/signout_img"
-import { AdminIcon } from "@/assets/admin_icon"
 import { useAuth } from "@/contexts/AuthContext"
+import {PersonStanding, House, ShoppingCart, LogOut} from "lucide-react"
 
 export function Sidebar(){
   const location = useLocation();
@@ -35,7 +33,7 @@ export function Sidebar(){
       <SidebarMenuItem>
             <SidebarMenuButton isActive={location.pathname === "/home"}>
               <Link to="/home" className="flex items-center gap-2">
-                <HomeImg />
+                <House className="text-orange-400" />
                 <span className="text-md font-bold">Home</span>
               </Link>
             </SidebarMenuButton>
@@ -45,7 +43,7 @@ export function Sidebar(){
       <SidebarMenuItem>
             <SidebarMenuButton isActive={location.pathname === "/orders"}>
               <Link to="/orders" className="flex items-center gap-2">
-                <AdminIcon />
+                <ShoppingCart className="text-orange-400"/>
                 <span className="text-md font-bold">Pedidos</span>
               </Link>
             </SidebarMenuButton>
@@ -58,7 +56,7 @@ export function Sidebar(){
               }
             >
               <Link to="/users" className="flex items-center gap-2">
-                <AdminIcon />
+               <PersonStanding className="text-orange-400"/>
                 <span className="text-md font-bold">Usuários</span>
               </Link>
             </SidebarMenuButton>
@@ -75,7 +73,7 @@ export function Sidebar(){
               navigate("/")
             }}>
               <button className="flex items-center gap-2 cursor-pointer border-none bg-transparent w-full text-left">
-                <SignOutImg />
+                <LogOut className="text-orange-400"/>
                 <span className="text-md font-bold">logout</span>
               </button>
             </SidebarMenuButton>

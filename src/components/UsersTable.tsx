@@ -54,7 +54,7 @@ export function UsersTable({ users }: { users: UsersTableProps[] }) {
             <TableCell>{user.active ? "Sim" : "Não"}</TableCell>
             <TableCell>{user.admin ? "Sim" : "Não"}</TableCell>
             <TableCell>
-              <Button variant="outline" onClick={() => handleEdit(user.id)}>Editar</Button>
+              <Button variant="ghost" className="text-orange-400 cursor-pointer" onClick={() => handleEdit(user.id)}>Editar</Button>
             </TableCell>
           </TableRow>
         ))}

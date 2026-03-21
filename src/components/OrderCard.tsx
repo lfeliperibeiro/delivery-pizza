@@ -12,8 +12,9 @@ import {
 import { Dialog } from "./Dialog"
 import { api } from "@/api"
 import { toast } from "sonner"
-import {  useState } from "react"
-import { formatDateTime } from "@/lib/datetime"
+import { useEffect, useState } from "react"
+import { formatDateTime, parseBackendDateTime } from "@/lib/datetime"
+import { useNavigate } from "react-router-dom"
 
 export interface OrderItem {
   name?: string,
@@ -43,6 +44,15 @@ export function OrderCard({order, onRefetch}: Order) {
             status === "Finished" ? "bg-green-500 text-black" : "bg-red-500 text-black"
   }
   const [open, setOpen] = useState(false)
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const navigate = useNavigate()
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNowMs(Date.now())
+    }, 60_000)
+
+    return () => clearInterval(interval)
+  }, [])
 
 
 
@@ -91,8 +101,56 @@ export function OrderCard({order, onRefetch}: Order) {
           default: return "Pendente"
     }
   }
+
+  const getElapsedMs = () => {
+    if (!order.created_at) return null
+    const createdAt = parseBackendDateTime(order.created_at)
+    const createdAtMs = createdAt.getTime()
+    if (Number.isNaN(createdAtMs)) return null
+    return nowMs - createdAtMs
+  }
+
+  const getOrderAgeClass = () => {
+    if (order.status !== "Pending") return ""
+    const elapsedMs = getElapsedMs()
+    if (elapsedMs === null) return ""
+    const oneHourMs = 60 * 60 * 1000
+    const twoHoursMs = 2 * 60 * 60 * 1000
+
+    if (elapsedMs >= twoHoursMs) return "border-red-500"
+    if (elapsedMs >= oneHourMs) return "border-orange-400"
+    return ""
+  }
+
+  const getSlaBadge = () => {
+    if (order.status !== "Pending") {
+      return {
+        label: translateStatus(order.status),
+        className: getStatusColor(order.status),
+      }
+    }
+
+    const elapsedMs = getElapsedMs()
+    if (elapsedMs === null) {
+      return { label: "Pedido dentro do prazo", className: "bg-green-500 text-black" }
+    }
+
+    const oneHourMs = 60 * 60 * 1000
+    const twoHoursMs = 2 * 60 * 60 * 1000
+
+    if (elapsedMs > twoHoursMs) {
+      return { label: "Pedido muito atrasado", className: "bg-red-500 text-black" }
+    }
+    if (elapsedMs > oneHourMs) {
+      return { label: "Pedido atrasado", className: "bg-yellow-500 text-black" }
+    }
+    return { label: "Pedido dentro do prazo", className: "bg-green-500 text-black" }
+  }
+
+  const slaBadge = getSlaBadge()
+
   return (
-    <Card className="relative mx-auto w-full max-w-sm pt-0">
+    <Card className={`relative mx-auto w-full max-w-sm border-2 pt-0 ${getOrderAgeClass()}`}>
       <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
       <img
         src={pizzaImg}
@@ -101,7 +159,9 @@ export function OrderCard({order, onRefetch}: Order) {
       />
       <CardHeader>
         <CardAction>
-          <Badge variant="secondary" className={getStatusColor(order.status)}>{translateStatus(order.status)}</Badge>
+          <Badge variant="secondary" className={slaBadge.className}>
+            {slaBadge.label}
+          </Badge>
         </CardAction>
         <CardTitle>Pedido #{order.id}</CardTitle>
         <CardDescription>
@@ -127,9 +187,12 @@ export function OrderCard({order, onRefetch}: Order) {
         </CardDescription>
       </CardHeader>
       <CardFooter>
-      <Button className="w-full" disabled={order.status === "Finished" || order.status === "Cancelled"} onClick={() => setOpen(true)}>{
+     <div className="flex flex-col gap-2 w-full">
+     <Button className="w-full" disabled={order.status === "Finished" || order.status === "Cancelled"} onClick={() => setOpen(true)}>{
           order.status === "Pending"  ? "Finalizar ou Cancelar" : order.status === "Finished" ? "Entregue" : "Cancelado"
           }</Button>
+          <Button disabled={order.status === "Finished" || order.status === "Cancelled"} onClick={() => navigate(`/orders/edit?id=${order.id}`)}>Editar Pedido</Button>
+     </div>
         <Dialog
           openModal={open}
           setOpenModal={setOpen}

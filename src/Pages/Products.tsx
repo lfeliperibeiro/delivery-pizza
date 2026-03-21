@@ -16,7 +16,6 @@ export interface Product {
   id: number,
   name: string,
   price: number,
-  quantity: number,
   size: string
 }
 
@@ -28,7 +27,7 @@ async function fetchProducts(): Promise<Product[]> {
   }
 
   try {
-    const response = await api.get("/orders/list_products", {
+    const response = await api.get("/orders/list", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -61,7 +60,6 @@ function ProductsTable({ productsPromise }: { productsPromise: Promise<Product[]
           <TableHead className="w-[100px]">ID</TableHead>
           <TableHead>Sabor</TableHead>
           <TableHead>Preço</TableHead>
-          <TableHead className="text-right">Quantidade</TableHead>
           <TableHead className="text-right">Tamanho</TableHead>
         </TableRow>
       </TableHeader>
@@ -83,7 +81,6 @@ function ProductsTable({ productsPromise }: { productsPromise: Promise<Product[]
                 currency: "BRL",
               })}
             </TableCell>
-            <TableCell className="text-right">{product.quantity}</TableCell>
             <TableCell className="text-right">{product.size}</TableCell>
           </TableRow>
         ))}
