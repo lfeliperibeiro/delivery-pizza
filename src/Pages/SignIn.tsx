@@ -42,7 +42,7 @@ export function SignIn(){
             <h1 className="text-2xl font-bold">Login</h1>
             <FieldInputSignIn username={email} setUsername={setEmail} password={password} setPassword={setPassword} />
             <Button onClick={handleSignIn} disabled={!email || !password}>Login</Button>
-            <p className="text-center text-sm">você ainda não tem uma conta? <a href="/register" className="text-blue-500">Clique aqui</a></p>
+            <p className="text-center text-sm">você ainda não tem uma conta? <a href="/register" className="text-orange-500">Clique aqui</a></p>
         </div>
         <Toaster />
     </div>

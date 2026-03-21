@@ -7,6 +7,7 @@ import { SignUp } from "./Pages/SignUp"
 import { Users } from "./Pages/Users"
 import { EditUser } from "./Pages/EditUser"
 import { EditOrder } from "./Pages/EditOrder"
+import { Analytics } from "./Pages/Analytics"
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: "/orders/edit", element: <EditOrder /> },
       { path: "/users", element: <Users /> },
       { path: "/users/edit/:id", element: <EditUser /> },
+      { path: "/analytics", element: <Analytics /> },
     ],
   },
 ])

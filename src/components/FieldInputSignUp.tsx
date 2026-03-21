@@ -30,17 +30,17 @@ export function FieldInputSignUp({
     <FieldSet className="w-full max-w-xs">
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="username">Usuário</FieldLabel>
+          <FieldLabel htmlFor="username">Email</FieldLabel>
           <Input
             id="username"
             type="text"
-            placeholder="nome do usuario"
+            placeholder="email"
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
           <FieldDescription>
-            Insira o nome do usuario da sua conta
+            Insira o email da sua conta
           </FieldDescription>
         </Field>
         <Field>

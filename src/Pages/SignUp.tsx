@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { api } from "@/api"
 import { toast, Toaster } from "sonner"
 import { FieldInputSignUp } from "@/components/FieldInputSignUp"
+import { ArrowLeft } from "lucide-react"
 
 export function SignUp() {
   const [password, setPassword] = useState("")
@@ -46,7 +47,13 @@ export function SignUp() {
   }
 
   return (
+    <>
+    <div className="flex items-center gap-2 cursor-pointer p-4 hover:text-orange-200" onClick={() => navigate("/")}>
+    <ArrowLeft className="size-4 text-orange-500" />
+    <p className="text-sm">Voltar para o login</p>
+  </div>
     <div className="flex h-screen items-center justify-center">
+
       <div className="flex w-full max-w-xs flex-col gap-4">
         <h1 className="text-2xl font-bold">Cadastro</h1>
         <FieldInputSignUp
@@ -68,5 +75,6 @@ export function SignUp() {
       </div>
       <Toaster />
     </div>
+    </>
   )
 }
