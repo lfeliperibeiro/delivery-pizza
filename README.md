@@ -15,7 +15,7 @@ This project is built using modern web development tools:
 ## ✨ Features
 
 - **Authentication System**: Secure JWT-based login (communicating with a Python/FastAPI backend).
-- **Protected Routes**: Main application routes (`/home`, `/home/create-product`) are guarded by Context API. Unauthenticated users are redirected cleanly to the sign-in page.
+- **Protected Routes**: Rotas autenticadas (ex.: `/home`, `/orders`, `/users`) usam `Layout` + Context API. Usuários não autenticados são redirecionados para `/`.
 - **Dynamic Dashboard**: Custom Sidebar layout utilizing modern CSS techniques to organize the workspace.
 - **Order Management**: Real-time rendering of active orders, fetching complex JSON schema relations directly from the API.
 

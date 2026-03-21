@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/datetime"
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ export interface OrderTableProps {
   }
   price: number
   status: string
+  created_at: string
 }
 
 export function OrderTable({ orders }: { orders: OrderTableProps[] }) {
@@ -36,6 +38,7 @@ export function OrderTable({ orders }: { orders: OrderTableProps[] }) {
           <TableHead>Usuário</TableHead>
           <TableHead>Preço</TableHead>
           <TableHead className="text-right">Status</TableHead>
+          <TableHead className="text-right">Data</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -64,12 +67,16 @@ export function OrderTable({ orders }: { orders: OrderTableProps[] }) {
                 {order.status}
               </Badge>
             </TableCell>
+            <TableCell className="text-right">
+              {order.created_at === null ?
+              "N/A" :
+              formatDateTime(order.created_at)}</TableCell>
           </TableRow>
         ))}
       </TableBody>
       <TableFooter>
         <TableRow>
-          <TableCell colSpan={3}>Total</TableCell>
+          <TableCell colSpan={4}>Total</TableCell>
           <TableCell className="text-right">
             {orders
               .reduce((acc, order) => acc + order.price, 0)

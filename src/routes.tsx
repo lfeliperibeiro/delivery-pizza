@@ -1,32 +1,28 @@
-import { createBrowserRouter } from "react-router-dom";
-import { Layout } from "./layout";
-import { Home } from "./Pages/Home";
-import { Orders } from "./Pages/Orders";
-import { SignIn } from "./Pages/SignIn";
-import { SignUp } from "./Pages/SignUp";
+import { createBrowserRouter } from "react-router-dom"
+import { Layout } from "./layout"
+import { Home } from "./Pages/Home"
+import { Orders } from "./Pages/Orders"
+import { SignIn } from "./Pages/SignIn"
+import { SignUp } from "./Pages/SignUp"
+import { Users } from "./Pages/Users"
+import { EditUser } from "./Pages/EditUser"
 
 export const router = createBrowserRouter([
-      {
-        path: "/",
-        element: <SignIn />,
-      },
-      {
-        path: "/register",
-        element: <SignUp />,
-      },
-      {
-        path: "/home",
-        element: <Layout />,
-
-        children: [
-          {
-            index: true,
-            element: <Home />,
-          },
-          {
-            path: "/home/orders",
-            element: <Orders />,
-          }
-        ],
-      },
-    ])
+  {
+    path: "/",
+    element: <SignIn />,
+  },
+  {
+    path: "/register",
+    element: <SignUp />,
+  },
+  {
+    element: <Layout />,
+    children: [
+      { path: "/home", element: <Home /> },
+      { path: "/orders", element: <Orders /> },
+      { path: "/users", element: <Users /> },
+      { path: "/users/edit/:id", element: <EditUser /> },
+    ],
+  },
+])

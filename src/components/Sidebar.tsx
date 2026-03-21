@@ -43,10 +43,23 @@ export function Sidebar(){
     </SidebarMenu>
     <SidebarMenu className="flex flex-col gap-2">
       <SidebarMenuItem>
-            <SidebarMenuButton isActive={location.pathname === "/home/orders"}>
-              <Link to="/home/orders" className="flex items-center gap-2">
+            <SidebarMenuButton isActive={location.pathname === "/orders"}>
+              <Link to="/orders" className="flex items-center gap-2">
                 <AdminIcon />
                 <span className="text-md font-bold">Pedidos</span>
+              </Link>
+            </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={
+                location.pathname === "/users" ||
+                location.pathname.startsWith("/users/")
+              }
+            >
+              <Link to="/users" className="flex items-center gap-2">
+                <AdminIcon />
+                <span className="text-md font-bold">Usuários</span>
               </Link>
             </SidebarMenuButton>
       </SidebarMenuItem>
@@ -56,10 +69,11 @@ export function Sidebar(){
   <SidebarFooter>
     <SidebarMenu>
         <SidebarMenuItem>
-            <SidebarMenuButton isActive={location.pathname === "/logout"} onClick={() => {
-              logout(),
+            <SidebarMenuButton isActive={location.pathname === "/logout"}
+              onClick={() => {
+              logout()
               navigate("/")
-              }}>
+            }}>
               <button className="flex items-center gap-2 cursor-pointer border-none bg-transparent w-full text-left">
                 <SignOutImg />
                 <span className="text-md font-bold">logout</span>

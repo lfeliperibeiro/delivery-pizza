@@ -13,12 +13,14 @@ import { Dialog } from "./Dialog"
 import { api } from "@/api"
 import { toast } from "sonner"
 import {  useState } from "react"
+import { formatDateTime } from "@/lib/datetime"
 
 export interface OrderItem {
   name?: string,
   price: number,
   quantity: number,
   size: string
+
 }
 
 interface OrderCardProps {
@@ -26,6 +28,7 @@ interface OrderCardProps {
     status: string,
     price: number,
     items: OrderItem[]
+    created_at: string | null
 }
 
 interface Order {
@@ -105,9 +108,11 @@ export function OrderCard({order, onRefetch}: Order) {
           {order.items && order.items.length > 0 ? (
             <ul className="mt-2 space-y-1">
               {order.items.map((item, index) => (
+                <>
                 <li key={index} className="text-sm">
                   {item.quantity}x {item.name} ({item.size})
                 </li>
+                </>
               ))}
             </ul>
           ) : (
@@ -115,6 +120,9 @@ export function OrderCard({order, onRefetch}: Order) {
           )}
           <div className="mt-4 font-bold text-foreground">
             Total: R$ {order.price.toFixed(2)}
+          </div>
+          <div className="mt-4 font-bold text-foreground">
+             {order.created_at === null ? "N/A" : formatDateTime(order.created_at)}
           </div>
         </CardDescription>
       </CardHeader>
