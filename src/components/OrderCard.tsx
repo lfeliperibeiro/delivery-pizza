@@ -17,19 +17,18 @@ import { formatDateTime, parseBackendDateTime } from "@/lib/datetime"
 import { useNavigate } from "react-router-dom"
 
 export interface OrderItem {
-  name?: string,
-  price: number,
+  product_id: number,
   quantity: number,
-  size: string
-
 }
 
 interface OrderCardProps {
-    id: number,
-    status: string,
-    price: number,
-    items: OrderItem[]
-    created_at: string | null
+  id: number,
+  status: string,
+  price: number,
+  items: OrderItem[],
+  created_at: string | null,
+  notes: string | null,
+  payment_method: string | null,
 }
 
 interface Order {
@@ -148,7 +147,6 @@ export function OrderCard({order, onRefetch}: Order) {
   }
 
   const slaBadge = getSlaBadge()
-
   return (
     <Card className={`relative mx-auto w-full max-w-sm border-2 pt-0 ${getOrderAgeClass()}`}>
       <div className="absolute inset-0 z-30 aspect-video bg-black/35" />
@@ -170,7 +168,7 @@ export function OrderCard({order, onRefetch}: Order) {
               {order.items.map((item, index) => (
                 <>
                 <li key={index} className="text-sm">
-                  {item.quantity}x {item.name} ({item.size})
+                  {item.quantity}x Produto #{item.product_id}
                 </li>
                 </>
               ))}
@@ -179,11 +177,17 @@ export function OrderCard({order, onRefetch}: Order) {
             <span className="block mt-2">Nenhum item encontrado</span>
           )}
           <div className="mt-4 font-bold text-foreground">
-            Total: R$ {order.price.toFixed(2)}
+            Total: R$ {(order.price ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </div>
-          <div className="mt-4 font-bold text-foreground">
-             {order.created_at === null ? "N/A" : formatDateTime(order.created_at)}
+          <div className="mt-1 text-sm text-muted-foreground">
+            {order.created_at === null ? "N/A" : formatDateTime(order.created_at)}
           </div>
+          {order.payment_method && (
+            <div className="mt-1 text-sm text-muted-foreground">Pagamento: {order.payment_method}</div>
+          )}
+          {order.notes && (
+            <div className="mt-1 text-sm text-muted-foreground">Obs: {order.notes}</div>
+          )}
         </CardDescription>
       </CardHeader>
       <CardFooter>

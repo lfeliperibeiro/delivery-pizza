@@ -34,15 +34,10 @@ async function fetchProducts(): Promise<Product[]> {
     })
 
     const data = response.data
-    if (Array.isArray(data)) {
-      return data
-    }
+    if (!Array.isArray(data)) return []
 
-    if (data && Array.isArray(data.products)) {
-      return data.products
-    }
-
-    return []
+    type RawProduct = { product_id: number; name: string; price: number; size: string }
+    return (data as RawProduct[]).map((p) => ({ id: p.product_id, name: p.name, price: p.price, size: p.size }))
   } catch {
     toast.error("Erro ao buscar produtos")
     return []

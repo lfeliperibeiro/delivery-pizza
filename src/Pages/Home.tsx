@@ -8,27 +8,31 @@ interface Order {
   id: number,
   status: string,
   price: number,
-  items: OrderItem[]
+  items: OrderItem[],
+  created_at: string | null,
+  notes: string | null,
+  payment_method: string | null,
 }
 
 async function fetchOrders(): Promise<Order[]> {
   const token = localStorage.getItem('access_token');
   try {
     const response = await api.get("/orders/list_order/order_user", {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     })
     const data = response.data
+    if (!Array.isArray(data)) return []
 
-    if (Array.isArray(data)) {
-      return data
-    } else {
-      console.error("Expected an array of orders, received:", data)
-      return []
-    }
-  } catch (error) {
-    console.error("Error fetching orders:", error)
+    return data.map((o) => ({
+      id: o.order_id,
+      status: o.status,
+      price: o.total_price,
+      items: o.products ?? [],
+      created_at: o.created_at,
+      notes: o.notes,
+      payment_method: o.payment_method,
+    }))
+  } catch {
     return []
   }
 }

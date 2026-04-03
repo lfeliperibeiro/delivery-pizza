@@ -12,14 +12,12 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Legend,
+  Legend
 } from "recharts"
 
 interface OrderItem {
-  name?: string
-  price: number
+  product_id: number
   quantity: number
-  size: string
 }
 
 interface Order {
@@ -30,17 +28,38 @@ interface Order {
   created_at: string | null
 }
 
-async function fetchOrders(): Promise<Order[]> {
+interface ProductMap {
+  [id: number]: string
+}
+
+async function fetchData(): Promise<{ orders: Order[]; productNames: ProductMap }> {
   const token = localStorage.getItem("access_token")
-  try {
-    const response = await api.get("/orders/list_order/order_user", {
-      headers: { Authorization: `Bearer ${token}` },
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [ordersRes, productsRes] = await Promise.all([
+    api.get("/orders/list_order/order_user", { headers }),
+    api.get("/orders/list", { headers }),
+  ])
+
+  const orders: Order[] = Array.isArray(ordersRes.data)
+    ? ordersRes.data.map((o: Record<string, unknown>) => ({
+        id: o.order_id as number,
+        status: o.status as string,
+        price: (o.total_price as number) ?? 0,
+        items: (o.products as OrderItem[]) ?? [],
+        created_at: o.created_at as string | null,
+      }))
+    : []
+
+  type RawProduct = { product_id: number; name: string }
+  const productNames: ProductMap = {}
+  if (Array.isArray(productsRes.data)) {
+    ;(productsRes.data as RawProduct[]).forEach((p) => {
+      productNames[p.product_id] = p.name
     })
-    const data = response.data
-    return Array.isArray(data) ? data : []
-  } catch {
-    return []
   }
+
+  return { orders, productNames }
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -73,7 +92,7 @@ function translateStatus(status: string) {
   }
 }
 
-function computeAnalytics(orders: Order[]) {
+function computeAnalytics(orders: Order[], productNames: ProductMap) {
   const totalOrders = orders.length
   const totalRevenue = orders
     .filter((o) => o.status === "Finished")
@@ -91,23 +110,16 @@ function computeAnalytics(orders: Order[]) {
     fill: STATUS_COLORS[name] ?? "#6366f1",
   }))
 
-  const flavorQty: Record<string, number> = {}
-  const flavorRevenue: Record<string, number> = {}
-  for (const order of orders) {
+  const productQty: Record<string, number> = {}
+  for (const order of orders.filter((o) => o.status === "Finished")) {
     for (const item of order.items ?? []) {
-      const name = item.name ?? "Desconhecido"
-      flavorQty[name] = (flavorQty[name] ?? 0) + (item.quantity ?? 1)
-      flavorRevenue[name] =
-        (flavorRevenue[name] ?? 0) + item.price * (item.quantity ?? 1)
+      const key = productNames[item.product_id] ?? `Produto #${item.product_id}`
+      productQty[key] = (productQty[key] ?? 0) + (item.quantity ?? 1)
     }
   }
 
-  const flavorData = Object.entries(flavorQty)
-    .map(([name, quantity]) => ({
-      name,
-      quantity,
-      receita: flavorRevenue[name] ?? 0,
-    }))
+  const flavorData = Object.entries(productQty)
+    .map(([name, quantity]) => ({ name, quantity }))
     .sort((a, b) => b.quantity - a.quantity)
     .slice(0, 8)
     .map((entry, index) => ({
@@ -118,10 +130,10 @@ function computeAnalytics(orders: Order[]) {
   return { totalOrders, totalRevenue, pendingOrders, statusData, flavorData }
 }
 
-function AnalyticsContent({ promise }: { promise: Promise<Order[]> }) {
-  const orders = use(promise)
+function AnalyticsContent({ promise }: { promise: Promise<{ orders: Order[]; productNames: ProductMap }> }) {
+  const { orders, productNames } = use(promise)
   const { totalOrders, totalRevenue, pendingOrders, statusData, flavorData } =
-    computeAnalytics(orders)
+    computeAnalytics(orders, productNames)
 
   return (
     <div className="flex flex-col gap-6 p-6 w-full">
@@ -243,64 +255,12 @@ function AnalyticsContent({ promise }: { promise: Promise<Order[]> }) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Receita por Sabor (Top 8)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {flavorData.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum dado disponível
-            </p>
-          ) : (
-            <ResponsiveContainer width="100%" height={flavorData.length * 52 + 32}>
-              <BarChart
-                data={flavorData}
-                layout="vertical"
-                margin={{ left: 16, right: 24 }}
-                barCategoryGap="30%"
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={false}
-                  stroke="hsl(var(--border))"
-                />
-                <XAxis
-                  type="number"
-                  tickFormatter={(v: number) =>
-                    `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`
-                  }
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={110}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 13 }}
-                />
-                <Tooltip
-                  formatter={(value) => [
-                    `R$ ${value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                    "Receita",
-                  ]}
-                  cursor={{ fill: "hsl(var(--muted))" }}
-                />
-                <Bar dataKey="receita" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }
 
 export function Analytics() {
-  const [promise] = useState<Promise<Order[]>>(() => fetchOrders())
+  const [promise] = useState<Promise<{ orders: Order[]; productNames: ProductMap }>>(() => fetchData())
 
   return (
     <Suspense
