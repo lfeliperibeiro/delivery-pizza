@@ -48,33 +48,35 @@ export function SignUp() {
 
   return (
     <>
-    <div className="flex items-center gap-2 cursor-pointer p-4 hover:text-orange-200" onClick={() => navigate("/")}>
-    <ArrowLeft className="size-4 text-orange-500" />
-    <p className="text-sm">Voltar para o login</p>
-  </div>
-    <div className="flex h-screen items-center justify-center">
-
-      <div className="flex w-full max-w-xs flex-col gap-4">
-        <h1 className="text-2xl font-bold">Cadastro</h1>
-        <FieldInputSignUp
-          username={username}
-          setUsername={setUsername}
-          name={name}
-          setName={setName}
-          password={password}
-          setPassword={setPassword}
-          confirmPassword={confirmPassword}
-          setConfirmPassword={setConfirmPassword}
-        />
-        <Button
-          onClick={handleSignUp}
-          disabled={!username || !password || !name}
-        >
-          Cadastrar
-        </Button>
+      <div
+        className="flex cursor-pointer items-center gap-2 p-4 hover:text-orange-200"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="size-4 text-orange-500" />
+        <p className="text-sm">Voltar para o login</p>
       </div>
-      <Toaster />
-    </div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex w-full max-w-xs flex-col gap-4">
+          <h1 className="text-2xl font-bold">Cadastro</h1>
+          <FieldInputSignUp
+            username={username}
+            setUsername={setUsername}
+            name={name}
+            setName={setName}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+          />
+          <Button
+            onClick={handleSignUp}
+            disabled={!username || !password || !name}
+          >
+            Cadastrar
+          </Button>
+        </div>
+        <Toaster />
+      </div>
     </>
   )
 }
