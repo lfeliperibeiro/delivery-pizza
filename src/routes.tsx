@@ -8,6 +8,7 @@ import { Users } from "./Pages/Users"
 import { EditUser } from "./Pages/EditUser"
 import { EditOrder } from "./Pages/EditOrder"
 import { Analytics } from "./Pages/Analytics"
+import { ArchivedOrders } from "./Pages/ArchivedOrders"
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "/users", element: <Users /> },
       { path: "/users/edit/:id", element: <EditUser /> },
       { path: "/analytics", element: <Analytics /> },
+      { path: "/arquivados", element: <ArchivedOrders /> },
     ],
   },
 ])

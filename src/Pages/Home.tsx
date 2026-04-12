@@ -1,6 +1,7 @@
 import { api } from "@/api"
 import { Loading } from "@/components/Loading";
 import { OrderCard, type OrderItem } from "@/components/OrderCard"
+import { isOlderThanDays } from "@/lib/datetime"
 import { use, useState, Suspense, useMemo, useCallback } from "react"
 import { Toaster } from "sonner";
 
@@ -23,15 +24,17 @@ async function fetchOrders(): Promise<Order[]> {
     const data = response.data
     if (!Array.isArray(data)) return []
 
-    return data.map((o) => ({
-      id: o.order_id,
-      status: o.status,
-      price: o.total_price,
-      items: o.products ?? [],
-      created_at: o.created_at,
-      notes: o.notes,
-      payment_method: o.payment_method,
-    }))
+    return data
+      .map((o) => ({
+        id: o.order_id,
+        status: o.status,
+        price: o.total_price,
+        items: o.products ?? [],
+        created_at: o.created_at,
+        notes: o.notes,
+        payment_method: o.payment_method,
+      }))
+      .filter((o) => !isOlderThanDays(o.created_at, 7))
   } catch {
     return []
   }

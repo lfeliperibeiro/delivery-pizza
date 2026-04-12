@@ -8,7 +8,7 @@ import {
 import { LogoImg } from "@/assets/logo"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
-import {PersonStanding, House, ShoppingCart, LogOut, ChartLine} from "lucide-react"
+import {PersonStanding, House, ShoppingCart, LogOut, ChartLine, Archive} from "lucide-react"
 
 export function Sidebar(){
   const location = useLocation();
@@ -53,6 +53,14 @@ export function Sidebar(){
               <Link to="/analytics" className="flex items-center gap-2">
                 <ChartLine className="text-orange-400"/>
                 <span className="text-md font-bold">Analytics</span>
+              </Link>
+            </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+            <SidebarMenuButton isActive={location.pathname === "/arquivados"}>
+              <Link to="/arquivados" className="flex items-center gap-2">
+                <Archive className="text-orange-400"/>
+                <span className="text-md font-bold">Arquivados</span>
               </Link>
             </SidebarMenuButton>
       </SidebarMenuItem>
