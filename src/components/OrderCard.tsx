@@ -1,3 +1,4 @@
+import { Archive } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import pizzaImg from "@/assets/pizza.png"
@@ -34,10 +35,11 @@ interface OrderCardProps {
 interface Order {
   order: OrderCardProps
   onRefetch: () => void
+  isArchived?: boolean
 }
 
 
-export function OrderCard({order, onRefetch}: Order) {
+export function OrderCard({order, onRefetch, isArchived}: Order) {
   const getStatusColor = (status: string) => {
     return status === "Pending" ? "bg-yellow-500 text-black" :
             status === "Finished" ? "bg-green-500 text-black" : "bg-red-500 text-black"
@@ -150,6 +152,12 @@ export function OrderCard({order, onRefetch}: Order) {
           <Badge variant="secondary" className={slaBadge.className}>
             {slaBadge.label}
           </Badge>
+          {isArchived && (
+            <Badge variant="secondary" className="bg-slate-500 text-white flex items-center gap-1">
+              <Archive className="h-3 w-3" />
+              Arquivado
+            </Badge>
+          )}
         </CardAction>
         <CardTitle>Pedido #{order.id}</CardTitle>
         <CardDescription>

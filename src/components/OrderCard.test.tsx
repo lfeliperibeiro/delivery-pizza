@@ -100,6 +100,7 @@ describe("OrderCard", () => {
   function renderOrderCard(
     overrides: Partial<Parameters<typeof OrderCard>[0]["order"]> = {},
     onRefetch = vi.fn(),
+    isArchived?: boolean,
   ) {
     const order = {
       id: 12,
@@ -113,7 +114,7 @@ describe("OrderCard", () => {
     }
 
     return {
-      ...render(<OrderCard order={order} onRefetch={onRefetch} />),
+      ...render(<OrderCard order={order} onRefetch={onRefetch} isArchived={isArchived} />),
       onRefetch,
     }
   }
@@ -205,5 +206,15 @@ describe("OrderCard", () => {
     })
 
     expect(toast.error).toHaveBeenCalledWith("Erro ao cancelar pedido")
+  })
+
+  it("mostra badge Arquivado quando isArchived é true", () => {
+    renderOrderCard({}, vi.fn(), true)
+    expect(screen.getByText("Arquivado")).toBeInTheDocument()
+  })
+
+  it("não mostra badge Arquivado quando isArchived não é passado", () => {
+    renderOrderCard()
+    expect(screen.queryByText("Arquivado")).not.toBeInTheDocument()
   })
 })
