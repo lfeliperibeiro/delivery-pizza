@@ -11,7 +11,7 @@ vi.mock("@/api", () => ({
 }))
 
 vi.mock("@/components/Loading", () => ({
-  Loading: () => <div>Carregando archived...</div>,
+  Loading: () => <div>Carregando arquivados...</div>,
 }))
 
 vi.mock("@/components/OrderCard", () => ({
@@ -48,13 +48,13 @@ describe("ArchivedOrders", () => {
     })
   }
 
-  it("mostra loading enquanto carrega pedidos archived", () => {
+  it("mostra loading enquanto carrega pedidos arquivados", () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-04-12T15:00:00Z").getTime())
     vi.mocked(api.get).mockImplementation(() => new Promise(() => undefined))
 
     render(<ArchivedOrders />)
 
-    expect(screen.getByText("Carregando archived...")).toBeInTheDocument()
+    expect(screen.getByText("Carregando arquivados...")).toBeInTheDocument()
   })
 
   it("filtra pedidos antigos e ordena do mais recente para o mais antigo", async () => {
@@ -103,7 +103,7 @@ describe("ArchivedOrders", () => {
     expect(cards[1]).toHaveTextContent("1")
   })
 
-  it("mostra estado vazio quando não existem pedidos archived", async () => {
+  it("mostra estado vazio quando não existem pedidos arquivados", async () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-04-12T15:00:00Z").getTime())
     vi.mocked(api.get).mockResolvedValue({
       data: [
@@ -170,7 +170,7 @@ describe("ArchivedOrders", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "retry-from-card" }))
 
-    expect(await screen.findByText("Erro ao carregar pedidos archived.")).toBeInTheDocument()
+    expect(await screen.findByText("Erro ao carregar pedidos arquivados.")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
 
