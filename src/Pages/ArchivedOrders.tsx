@@ -59,7 +59,7 @@ function ArchivedOrderGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full h-full">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} onRefetch={onRefetch} />
+        <OrderCard key={order.id} order={order} onRefetch={onRefetch} isArchived={true} />
       ))}
     </div>
   )
@@ -81,7 +81,7 @@ function ArchivedOrdersContent() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-8 text-muted-foreground">
-        <p>Erro ao carregar pedidos arquivados.</p>
+        <p>Erro ao carregar pedidos archived.</p>
         <button
           onClick={refetch}
           className="rounded-md border px-4 py-2 text-sm hover:bg-accent"

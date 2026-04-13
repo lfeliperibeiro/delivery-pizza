@@ -11,18 +11,20 @@ vi.mock("@/api", () => ({
 }))
 
 vi.mock("@/components/Loading", () => ({
-  Loading: () => <div>Carregando arquivados...</div>,
+  Loading: () => <div>Carregando archived...</div>,
 }))
 
 vi.mock("@/components/OrderCard", () => ({
   OrderCard: ({
     order,
     onRefetch,
+    isArchived,
   }: {
     order: { id: number; status: string; created_at: string | null }
     onRefetch?: () => void
+    isArchived?: boolean
   }) => (
-    <div data-testid="archived-order-card">
+    <div data-testid="archived-order-card" data-is-archived={isArchived ? "true" : "false"}>
       <span>{order.id}</span>
       <span>{order.status}</span>
       <span>{order.created_at ?? "sem-data"}</span>
@@ -46,13 +48,13 @@ describe("ArchivedOrders", () => {
     })
   }
 
-  it("mostra loading enquanto carrega pedidos arquivados", () => {
+  it("mostra loading enquanto carrega pedidos archived", () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-04-12T15:00:00Z").getTime())
     vi.mocked(api.get).mockImplementation(() => new Promise(() => undefined))
 
     render(<ArchivedOrders />)
 
-    expect(screen.getByText("Carregando arquivados...")).toBeInTheDocument()
+    expect(screen.getByText("Carregando archived...")).toBeInTheDocument()
   })
 
   it("filtra pedidos antigos e ordena do mais recente para o mais antigo", async () => {
@@ -101,7 +103,7 @@ describe("ArchivedOrders", () => {
     expect(cards[1]).toHaveTextContent("1")
   })
 
-  it("mostra estado vazio quando não existem pedidos arquivados", async () => {
+  it("mostra estado vazio quando não existem pedidos archived", async () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-04-12T15:00:00Z").getTime())
     vi.mocked(api.get).mockResolvedValue({
       data: [
@@ -168,7 +170,7 @@ describe("ArchivedOrders", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "retry-from-card" }))
 
-    expect(await screen.findByText("Erro ao carregar pedidos arquivados.")).toBeInTheDocument()
+    expect(await screen.findByText("Erro ao carregar pedidos archived.")).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
 
@@ -177,5 +179,31 @@ describe("ArchivedOrders", () => {
     })
 
     expect(await screen.findByText("2")).toBeInTheDocument()
+  })
+
+  it("passa isArchived como true para todos os OrderCards renderizados", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(new Date("2026-04-12T15:00:00Z").getTime())
+    vi.mocked(api.get).mockResolvedValue({
+      data: [
+        {
+          order_id: 1,
+          status: "Finished",
+          total_price: 40,
+          products: [],
+          created_at: "2026-04-01T10:00:00Z",
+          notes: null,
+          payment_method: null,
+        },
+      ],
+    })
+
+    await renderArchivedOrders()
+
+    await waitFor(() => {
+      const cards = screen.getAllByTestId("archived-order-card")
+      cards.forEach((card) => {
+        expect(card).toHaveAttribute("data-is-archived", "true")
+      })
+    })
   })
 })
