@@ -28,15 +28,7 @@ export function EditOrder() {
   const [products, setProducts] = useState<Product[]>([])
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      return
-    }
-    api.get("/orders/list", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    api.get("/orders/list")
       .then((response) => {
         const data = response.data
         if (Array.isArray(data)) {
@@ -52,12 +44,6 @@ export function EditOrder() {
   }, [])
   function handleCreateOrder(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const token = localStorage.getItem("access_token")
-
-    if (!token) {
-      toast.error("Faça login para criar um pedido")
-      return
-    }
     if (orderData.product_ids.length === 0) {
       toast.error("Selecione ao menos um produto")
       return
@@ -83,12 +69,6 @@ export function EditOrder() {
             product_id: productId,
             quantity: orderData.quantity!,
           })),
-        },
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         },
       )
     .then(() => {

@@ -95,7 +95,6 @@ describe("OrderCard", () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem("access_token", "token")
   })
 
   function renderOrderCard(
@@ -184,7 +183,6 @@ describe("OrderCard", () => {
       expect(api.post).toHaveBeenCalledWith(
         "/orders/order/finished/12",
         { order_id: 12 },
-        { headers: { Authorization: "Bearer token" } },
       )
     })
 
@@ -203,7 +201,6 @@ describe("OrderCard", () => {
       expect(api.post).toHaveBeenCalledWith(
         "/orders/order/cancel/12",
         { order_id: 12 },
-        { headers: { Authorization: "Bearer token" } },
       )
     })
 

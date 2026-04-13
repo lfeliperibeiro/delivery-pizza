@@ -63,22 +63,14 @@ function normalizeUser(raw: unknown): User | null {
 }
 
 async function fetchUsers(): Promise<User[]> {
-  const token = localStorage.getItem("access_token")
-  if (!token) {
-    toast.error("Faça login para ver os usuários")
-    return []
-  }
-
-  const headers = { Authorization: `Bearer ${token}` }
-
   try {
     let data: unknown
     try {
-      const response = await api.get("/users/users", { headers })
+      const response = await api.get("/users/users")
       data = response.data
     } catch (firstError) {
       if (axios.isAxiosError(firstError) && firstError.response?.status === 404) {
-        const response = await api.get("/users", { headers })
+        const response = await api.get("/users")
         data = response.data
       } else {
         throw firstError

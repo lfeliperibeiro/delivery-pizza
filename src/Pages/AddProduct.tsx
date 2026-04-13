@@ -20,21 +20,11 @@ export function AddProduct() {
 
   function handleAddProduct(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      toast.error("Faça login para adicionar um produto")
-      return
-    }
 
     api.post(`/orders/order/add_product`, {
       name: productData.name,
       price: productData.price,
       size: productData.size,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     ).then(() => {
       toast.success("Produto adicionado com sucesso")

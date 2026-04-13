@@ -55,15 +55,9 @@ export function OrderCard({order, onRefetch}: Order) {
 
 
 
-  const token = localStorage.getItem("access_token")
-
   function handleFinalize() {
     api.post(`/orders/order/finished/${order.id}`, {
       order_id: order.id,
-    },{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).then(() => {
       toast.success("Pedido finalizado com sucesso")
       setOpen(false)
@@ -76,10 +70,6 @@ export function OrderCard({order, onRefetch}: Order) {
   function handleCancel() {
     api.post(`/orders/order/cancel/${order.id}`, {
       order_id: order.id,
-    },{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).then(() => {
       toast.success("Pedido cancelado com sucesso")
       setOpen(false)

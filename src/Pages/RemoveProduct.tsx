@@ -12,18 +12,9 @@ export function RemoveProduct() {
 
   function handleRemoveProduct(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      toast.error("Faça login para remover um produto")
-      return
-    }
 
     api.post(`orders/order/remove_product/${productId}`, {
       product_id: productId,
-    },{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).then(() => {
       toast.success("Produto removido com sucesso")
     }).catch(() => {

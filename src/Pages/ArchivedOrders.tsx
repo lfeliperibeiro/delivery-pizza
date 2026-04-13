@@ -16,10 +16,7 @@ interface Order {
 }
 
 async function fetchArchivedOrders(): Promise<Order[]> {
-  const token = localStorage.getItem("access_token")
-  const response = await api.get("/orders/list_order/order_user", {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const response = await api.get("/orders/list_order/order_user")
   const data = response.data
   if (!Array.isArray(data)) return []
 

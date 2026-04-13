@@ -28,12 +28,7 @@ export function CreateOrder() {
   const [availableProducts, setAvailableProducts] = useState<Product[]>([])
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) return
-
-    api.get("/orders/list", {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((response) => {
+    api.get("/orders/list").then((response) => {
       const data = response.data
       if (!Array.isArray(data)) { setAvailableProducts([]); return }
 
@@ -64,12 +59,6 @@ export function CreateOrder() {
 
   function handleCreateOrder(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const token = localStorage.getItem("access_token")
-
-    if (!token) {
-      toast.error("Faça login para criar um pedido")
-      return
-    }
     if (!orderData.user_id || orderData.user_id <= 0) {
       toast.error("Informe um usuário válido")
       return
@@ -91,7 +80,6 @@ export function CreateOrder() {
         notes: orderData.notes || null,
         payment_method: orderData.payment_method || null,
       },
-      { headers: { Authorization: `Bearer ${token}` } },
     )
       .then(() => {
         toast.success("Pedido criado com sucesso")

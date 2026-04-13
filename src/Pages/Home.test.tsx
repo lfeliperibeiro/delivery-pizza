@@ -54,7 +54,6 @@ describe("Home", () => {
   }
 
   it("mostra loading enquanto carrega os pedidos", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockImplementationOnce(
       () => new Promise(() => undefined),
     )
@@ -65,7 +64,6 @@ describe("Home", () => {
   })
 
   it("carrega, normaliza e ordena pedidos pendentes primeiro", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValue({
       data: [
         {
@@ -92,9 +90,7 @@ describe("Home", () => {
     await renderHome()
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user", {
-        headers: { Authorization: "Bearer token" },
-      })
+      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user")
     })
 
     const cards = await screen.findAllByTestId("order-card")
@@ -106,7 +102,6 @@ describe("Home", () => {
   })
 
   it("filtra pedidos com mais de sete dias", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValue({
       data: [
         {
@@ -128,7 +123,6 @@ describe("Home", () => {
   })
 
   it("mostra estado vazio quando a api retorna formato invalido", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValue({
       data: { orders: [] },
     })
@@ -139,7 +133,6 @@ describe("Home", () => {
   })
 
   it("mostra estado vazio quando a busca falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockRejectedValue(new Error("boom"))
 
     render(<Home />)
@@ -148,7 +141,6 @@ describe("Home", () => {
   })
 
   it("refaz a busca quando um card dispara onRefetch", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get)
       .mockResolvedValueOnce({
         data: [

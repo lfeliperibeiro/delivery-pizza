@@ -28,17 +28,7 @@ describe("AddProduct", () => {
     return render(<AddProduct />)
   }
 
-  it("mostra erro sem token", () => {
-    renderAddProduct()
-
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar Produto" }))
-
-    expect(toast.error).toHaveBeenCalledWith("Faça login para adicionar um produto")
-    expect(api.post).not.toHaveBeenCalled()
-  })
-
   it("envia payload do produto e mostra sucesso", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.post).mockResolvedValueOnce({})
 
     renderAddProduct()
@@ -62,11 +52,6 @@ describe("AddProduct", () => {
           price: "45",
           size: "Grande",
         },
-        {
-          headers: {
-            Authorization: "Bearer token",
-          },
-        },
       )
     })
 
@@ -74,7 +59,6 @@ describe("AddProduct", () => {
   })
 
   it("mostra erro quando o cadastro falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.post).mockRejectedValueOnce(new Error("boom"))
 
     renderAddProduct()

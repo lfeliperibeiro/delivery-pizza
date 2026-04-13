@@ -33,12 +33,9 @@ interface ProductMap {
 }
 
 async function fetchData(): Promise<{ orders: Order[]; productNames: ProductMap }> {
-  const token = localStorage.getItem("access_token")
-  const headers = { Authorization: `Bearer ${token}` }
-
   const [ordersRes, productsRes] = await Promise.all([
-    api.get("/orders/list_order/order_user", { headers }),
-    api.get("/orders/list", { headers }),
+    api.get("/orders/list_order/order_user"),
+    api.get("/orders/list"),
   ])
 
   const orders: Order[] = Array.isArray(ordersRes.data)

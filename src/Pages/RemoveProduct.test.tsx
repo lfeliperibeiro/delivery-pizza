@@ -28,17 +28,7 @@ describe("RemoveProduct", () => {
     return render(<RemoveProduct />)
   }
 
-  it("mostra erro sem token", () => {
-    renderRemoveProduct()
-
-    fireEvent.click(screen.getByRole("button", { name: "Remover Produto" }))
-
-    expect(toast.error).toHaveBeenCalledWith("Faça login para remover um produto")
-    expect(api.post).not.toHaveBeenCalled()
-  })
-
   it("envia remoção de produto com sucesso", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.post).mockResolvedValueOnce({})
 
     renderRemoveProduct()
@@ -52,11 +42,6 @@ describe("RemoveProduct", () => {
       expect(api.post).toHaveBeenCalledWith(
         "orders/order/remove_product/8",
         { product_id: 8 },
-        {
-          headers: {
-            Authorization: "Bearer token",
-          },
-        },
       )
     })
 
@@ -64,7 +49,6 @@ describe("RemoveProduct", () => {
   })
 
   it("mostra erro quando a remoção falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.post).mockRejectedValueOnce(new Error("boom"))
 
     renderRemoveProduct()

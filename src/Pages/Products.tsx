@@ -20,18 +20,8 @@ export interface Product {
 }
 
 async function fetchProducts(): Promise<Product[]> {
-  const token = localStorage.getItem("access_token")
-  if (!token) {
-    toast.error("Faça login para ver os produtos")
-    return []
-  }
-
   try {
-    const response = await api.get("/orders/list", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
+    const response = await api.get("/orders/list")
 
     const data = response.data
     if (!Array.isArray(data)) return []

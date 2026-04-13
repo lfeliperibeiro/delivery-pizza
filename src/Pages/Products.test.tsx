@@ -51,7 +51,6 @@ describe("Products", () => {
   }
 
   it("mostra loading enquanto busca produtos", () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockImplementation(() => new Promise(() => undefined))
 
     render(<Products />)
@@ -60,7 +59,6 @@ describe("Products", () => {
   })
 
   it("carrega e normaliza produtos da api", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValue({
       data: [
         { product_id: 1, name: "Calabresa", price: 45, size: "Grande" },
@@ -71,9 +69,7 @@ describe("Products", () => {
     await renderProducts()
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/orders/list", {
-        headers: { Authorization: "Bearer token" },
-      })
+      expect(api.get).toHaveBeenCalledWith("/orders/list")
     })
 
     expect(screen.getByText("Calabresa")).toBeInTheDocument()
@@ -82,15 +78,7 @@ describe("Products", () => {
     expect(screen.getByText("Media")).toBeInTheDocument()
   })
 
-  it("mostra erro e estado vazio sem token", async () => {
-    await renderProducts()
-
-    expect(toast.error).toHaveBeenCalledWith("Faça login para ver os produtos")
-    expect(screen.getByText("Nenhum produto encontrado.")).toBeInTheDocument()
-  })
-
   it("mostra estado vazio quando a resposta vem em formato invalido", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValue({
       data: { products: [] },
     })
@@ -101,7 +89,6 @@ describe("Products", () => {
   })
 
   it("mostra erro quando a busca falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockRejectedValue(new Error("boom"))
 
     await renderProducts()

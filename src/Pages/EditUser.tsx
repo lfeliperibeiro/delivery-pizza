@@ -35,13 +35,8 @@ const EMPTY_USER: UserData = {
 }
 
 async function fetchUserData(id: string): Promise<UserData> {
-  const token = localStorage.getItem("access_token")
-  if (!token) return EMPTY_USER
-
   try {
-    const response = await api.get(`/users/user/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await api.get(`/users/user/${id}`)
     return extractUserFromResponse(response.data) ?? EMPTY_USER
   } catch {
     toast.error("Erro ao carregar usuário")
@@ -62,12 +57,6 @@ function EditUserForm({
 
   function handleEditUser(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      toast.error("Faça login para editar usuário")
-      return
-    }
-
     api.put(
       `/users/user/${id}`,
       {
@@ -75,11 +64,6 @@ function EditUserForm({
         email: userData.email,
         active: userData.active,
         admin: userData.admin,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       },
     )
       .then(() => {

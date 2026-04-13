@@ -55,7 +55,6 @@ describe("CreateOrder", () => {
   }
 
   it("carrega os produtos disponíveis ao montar a tela", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: [
         { product_id: 1, name: "Calabresa", price: 45, size: "Grande" },
@@ -66,28 +65,14 @@ describe("CreateOrder", () => {
     renderCreateOrder()
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/orders/list", {
-        headers: { Authorization: "Bearer token" },
-      })
+      expect(api.get).toHaveBeenCalledWith("/orders/list")
     })
 
     expect(await screen.findByRole("button", { name: "Calabresa" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Portuguesa" })).toBeInTheDocument()
   })
 
-  it("mostra erro quando não há token para criar pedido", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: [] })
-
-    renderCreateOrder()
-
-    fireEvent.click(screen.getByRole("button", { name: /criar pedido/i }))
-
-    expect(toast.error).toHaveBeenCalledWith("Faça login para criar um pedido")
-    expect(api.post).not.toHaveBeenCalled()
-  })
-
   it("valida user_id obrigatório", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({ data: [] })
 
     renderCreateOrder()
@@ -98,7 +83,6 @@ describe("CreateOrder", () => {
   })
 
   it("valida seleção de produto antes do submit", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
     })
@@ -114,7 +98,6 @@ describe("CreateOrder", () => {
   })
 
   it("atualiza a quantidade do produto selecionado antes do submit", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
     })
@@ -145,13 +128,11 @@ describe("CreateOrder", () => {
           notes: null,
           payment_method: null,
         },
-        { headers: { Authorization: "Bearer token" } },
       )
     })
   })
 
   it("envia o pedido com notes e payment_method nulos quando vazios", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
     })
@@ -174,7 +155,6 @@ describe("CreateOrder", () => {
           notes: null,
           payment_method: null,
         },
-        { headers: { Authorization: "Bearer token" } },
       )
     })
 
@@ -183,7 +163,6 @@ describe("CreateOrder", () => {
   })
 
   it("mostra erro quando a criação do pedido falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
     })

@@ -68,7 +68,6 @@ describe("EditUser", () => {
   }
 
   it("carrega e normaliza os dados do usuário", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: { user: { name: "Maria", email: "maria@email.com", is_active: true, is_admin: false } },
     })
@@ -82,7 +81,6 @@ describe("EditUser", () => {
   })
 
   it("mostra erro ao carregar usuário quando a busca falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockRejectedValueOnce(new Error("load failed"))
 
     await renderEditUser()
@@ -94,21 +92,7 @@ describe("EditUser", () => {
     expect(await screen.findByRole("button", { name: /editar usuário/i })).toBeInTheDocument()
   })
 
-  it("mostra erro ao salvar quando não há token", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: { user: { name: "Maria", email: "maria@email.com", active: true, admin: false } },
-    })
-
-    await renderEditUser()
-
-    fireEvent.click(await screen.findByRole("button", { name: /editar usuário/i }))
-
-    expect(toast.error).toHaveBeenCalledWith("Faça login para editar usuário")
-    expect(api.put).not.toHaveBeenCalled()
-  })
-
   it("envia o payload editado e exibe sucesso", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: { user: { name: "Maria", email: "maria@email.com", active: true, admin: false } },
     })
@@ -134,11 +118,6 @@ describe("EditUser", () => {
           active: true,
           admin: true,
         },
-        {
-          headers: {
-            Authorization: "Bearer token",
-          },
-        },
       )
     })
 
@@ -146,7 +125,6 @@ describe("EditUser", () => {
   })
 
   it("mostra erro quando a edição falha", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: { user: { name: "Maria", email: "maria@email.com", active: true, admin: false } },
     })

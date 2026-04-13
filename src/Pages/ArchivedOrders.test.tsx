@@ -38,7 +38,6 @@ describe("ArchivedOrders", () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
     localStorage.clear()
-    localStorage.setItem("access_token", "token")
   })
 
   async function renderArchivedOrders() {
@@ -93,9 +92,7 @@ describe("ArchivedOrders", () => {
     await renderArchivedOrders()
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user", {
-        headers: { Authorization: "Bearer token" },
-      })
+      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user")
     })
 
     const cards = screen.getAllByTestId("archived-order-card")

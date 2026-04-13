@@ -56,7 +56,6 @@ describe("Users", () => {
   }
 
   it("carrega e normaliza usuários da resposta principal", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockResolvedValueOnce({
       data: {
         users: [{ id: 1, full_name: "Maria Oliveira", email: "maria@email.com" }],
@@ -68,13 +67,10 @@ describe("Users", () => {
     expect(await screen.findByText("Maria Oliveira - maria@email.com")).toBeInTheDocument()
 
     expect(screen.getByTestId("users-count")).toHaveTextContent("1")
-    expect(api.get).toHaveBeenCalledWith("/users/users", {
-      headers: { Authorization: "Bearer token" },
-    })
+    expect(api.get).toHaveBeenCalledWith("/users/users")
   })
 
   it("faz fallback para /users quando /users/users retorna 404", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get)
       .mockRejectedValueOnce({ response: { status: 404 } })
       .mockResolvedValueOnce({
@@ -86,26 +82,11 @@ describe("Users", () => {
 
     expect(await screen.findByText("Carlos - carlos@email.com")).toBeInTheDocument()
 
-    expect(api.get).toHaveBeenNthCalledWith(1, "/users/users", {
-      headers: { Authorization: "Bearer token" },
-    })
-    expect(api.get).toHaveBeenNthCalledWith(2, "/users", {
-      headers: { Authorization: "Bearer token" },
-    })
-  })
-
-  it("mostra erro e lista vazia quando não há token", async () => {
-    await renderUsers()
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Faça login para ver os usuários")
-    })
-
-    expect(await screen.findByText("Nenhum usuário encontrado.")).toBeInTheDocument()
+    expect(api.get).toHaveBeenNthCalledWith(1, "/users/users")
+    expect(api.get).toHaveBeenNthCalledWith(2, "/users")
   })
 
   it("mostra erro quando a busca falha fora do caso de fallback", async () => {
-    localStorage.setItem("access_token", "token")
     vi.mocked(api.get).mockRejectedValueOnce(new Error("boom"))
     vi.mocked(axios.isAxiosError).mockReturnValue(false)
 
