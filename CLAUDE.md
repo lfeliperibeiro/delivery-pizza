@@ -163,10 +163,31 @@ const refetch = () => setPromise(fetch())
 ## Scripts
 
 ```bash
-pnpm run dev        # Servidor de desenvolvimento Vite
-pnpm run build      # Typecheck + build de produção
-pnpm run lint       # ESLint
-pnpm run format     # Prettier
-pnpm run typecheck  # Verificação de tipos apenas
-pnpm run preview    # Preview do build de produção
+pnpm run dev            # Servidor de desenvolvimento Vite
+pnpm run build          # Typecheck + build de produção
+pnpm run lint           # ESLint
+pnpm run format         # Prettier
+pnpm run typecheck      # Verificação de tipos apenas
+pnpm run preview        # Preview do build de produção
+pnpm run test           # Roda testes (vitest run)
+pnpm run test:watch     # Testes em modo watch
+pnpm run test:coverage  # Testes com cobertura
 ```
+
+> **Importante**: este projeto usa **pnpm**. Nunca usar `npm install` ou `yarn`.
+
+---
+
+## Testes
+
+Framework: **Vitest** + **@testing-library/react** + **happy-dom**
+
+Configuração: `vitest.config.ts` (ambiente `happy-dom`, globals ativados, setup em `src/test/setup.ts`)
+
+| Arquivo de teste | O que cobre |
+|-----------------|-------------|
+| `src/lib/datetime.test.ts` | `parseBackendDateTime`, `isOlderThanDays`, `formatDateTime` |
+| `src/lib/utils.test.ts` | `cn()` (clsx + tailwind-merge) |
+| `src/contexts/AuthContext.test.ts` | Funções puras: `parseJwtPayload`, `extractDisplayName`, `extractNumericId`, `extractProfileName`, `resolveDisplayNameFromPayload` |
+| `src/api/api.test.ts` | Lógica do interceptor de erro (evento `auth:invalid-token`) |
+| `src/Pages/SignIn.test.tsx` | Renderização, submit do formulário, chamada de login, toast de erro |

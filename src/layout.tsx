@@ -4,11 +4,17 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "./components/ui/s
 import { Sidebar } from "./components/Sidebar"
 
 export function Layout() {
-    const { isAuthenticated  } = useAuth()
+    const { displayName, identityStatus, isAuthenticated  } = useAuth()
 
     if (!isAuthenticated) {
         return <Navigate to="/" replace />
     }
+
+    const greetingName = displayName ?? "Usuario"
+    const greetingTone =
+      identityStatus === "resolved"
+        ? "text-foreground"
+        : "text-muted-foreground"
 
     return (
        <SidebarProvider>
@@ -16,8 +22,8 @@ export function Layout() {
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-col gap-1 ml-4">
-          <p className="text-md font-bold">Delivery Pizza</p>
+          <div className="ml-4 flex min-w-0 flex-col gap-1">
+          <p className={`text-sm ${greetingTone}`}>Ola, <strong>{greetingName}</strong></p>
           <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", weekday: "long" })}</p>
           </div>
         </header>

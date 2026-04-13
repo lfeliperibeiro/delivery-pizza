@@ -22,7 +22,7 @@ export function SignIn(){
       return response.data;
     })
     .then((data) => {
-      login(data.access_token)
+      login(data.access_token, data)
       navigate('/home')
     })
     .catch(() => {

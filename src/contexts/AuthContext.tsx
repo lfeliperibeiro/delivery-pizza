@@ -20,7 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const ACCESS_TOKEN_KEY = "access_token"
 const AUTH_USER_KEY = "auth_user"

@@ -33,7 +33,7 @@ export function SignUp() {
           description:
             "Você será redirecionado para a página inicial em 2 segundos",
         })
-        login(data.access_token)
+        login(data.access_token, data)
         setTimeout(() => navigate("/home"), 2000)
       })
       .catch(() => {
