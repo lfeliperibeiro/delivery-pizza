@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add a protected `/arquivados` route that displays order cards for all orders whose `created_at` is more than 7 days in the past. The existing `/home` route is updated to show only orders created within the last 7 days. The `OrderCard` component is reused unchanged on the archived page. A shared date utility is added to `src/lib/datetime.ts`. A navigation entry is added to the `Sidebar`. No new backend endpoints are required — the existing order list endpoint is sufficient; filtering is applied client-side at load time.
+Add a protected `/archived` route that displays order cards for all orders whose `created_at` is more than 7 days in the past. The existing `/home` route is updated to show only orders created within the last 7 days. The `OrderCard` component is reused unchanged on the archived page. A shared date utility is added to `src/lib/datetime.ts`. A navigation entry is added to the `Sidebar`. No new backend endpoints are required — the existing order list endpoint is sufficient; filtering is applied client-side at load time.
 
 ## Technical Context
 
@@ -23,7 +23,7 @@ Add a protected `/arquivados` route that displays order cards for all orders who
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- ✅ **Authentication and protected navigation are preserved**: `/arquivados` is added as a child of the existing protected `Layout` wrapper, consistent with all other business routes.
+- ✅ **Authentication and protected navigation are preserved**: `/archived` is added as a child of the existing protected `Layout` wrapper, consistent with all other business routes.
 - ✅ **Backend endpoints identified**: A single endpoint (`GET /orders/list_order/order_user`) is used. No payload shape changes are required. The existing normalization in `Home.tsx` is replicated in the new page. The `api` client (with bearer token and `auth:invalid-token` interceptor) is used throughout.
 - ✅ **Loading, empty, success, and error states defined**: The new page follows the React 19 `Suspense` + `use()` pattern established in `Home.tsx`. Loading uses `<Loading />` fallback; empty uses an explicit message; error uses a caught rejection with a retry affordance.
 - ✅ **pt-BR localization preserved**: `OrderCard` is reused unchanged, which already renders currency in `pt-BR/BRL`, dates via `formatDateTime` (using `America/Sao_Paulo`), and translated status labels.
@@ -50,10 +50,10 @@ src/
 │   ├── Home.tsx                  # MODIFIED: filter out orders older than 7 days
 │   └── ArchivedOrders.tsx        # NEW: page for orders older than 7 days
 ├── components/
-│   └── Sidebar.tsx               # MODIFIED: add "Arquivados" navigation entry
+│   └── Sidebar.tsx               # MODIFIED: add "archived" navigation entry
 ├── lib/
 │   └── datetime.ts               # MODIFIED: add isOlderThanDays() utility
-└── routes.tsx                    # MODIFIED: register /arquivados protected route
+└── routes.tsx                    # MODIFIED: register /archived protected route
 ```
 
 ---
@@ -127,11 +127,11 @@ isOlderThanDays(created_at: string | null, days: number): boolean
 
 ### UI Contracts
 
-#### Route: `/arquivados`
+#### Route: `/archived`
 
 | Property             | Value |
 |----------------------|-------|
-| Route path           | `/arquivados` |
+| Route path           | `/archived` |
 | Protection           | Wrapped in existing `Layout` (authenticated only) |
 | Page component       | `src/Pages/ArchivedOrders.tsx` |
 | Data source          | `GET /orders/list_order/order_user` (same endpoint as `/home`) |
@@ -153,12 +153,12 @@ isOlderThanDays(created_at: string | null, days: number): boolean
 
 | Property   | Value |
 |------------|-------|
-| Label      | "Arquivados" |
+| Label      | "archived" |
 | Icon       | `Archive` (lucide-react) |
-| Link path  | `/arquivados` |
-| Active     | `location.pathname === "/arquivados"` |
+| Link path  | `/archived` |
+| Active     | `location.pathname === "/archived"` |
 | Position   | After "Analytics", before "Usuários" |
 
 ### Agent Context Update
 
-After writing this plan, the agent context file will be updated to reflect the new `/arquivados` route and `isOlderThanDays` utility.
+After writing this plan, the agent context file will be updated to reflect the new `/archived` route and `isOlderThanDays` utility.

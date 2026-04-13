@@ -81,8 +81,8 @@ describe("router", () => {
     expect(screen.getByTestId("layout")).toBeInTheDocument()
   })
 
-  it("rota /arquivados renderiza ArchivedOrders dentro do Layout", async () => {
-    await renderAt("/arquivados")
+  it("rota /archived renderiza ArchivedOrders dentro do Layout", async () => {
+    await renderAt("/archived")
     expect(await screen.findByText("Pagina ArchivedOrders")).toBeInTheDocument()
     expect(screen.getByTestId("layout")).toBeInTheDocument()
   })

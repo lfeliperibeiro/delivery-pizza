@@ -57,8 +57,8 @@ export function Sidebar(){
             </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-            <SidebarMenuButton isActive={location.pathname === "/arquivados"}>
-              <Link to="/arquivados" className="flex items-center gap-2">
+            <SidebarMenuButton isActive={location.pathname === "/archived"}>
+              <Link to="/archived" className="flex items-center gap-2">
                 <Archive className="text-orange-400"/>
                 <span className="text-md font-bold">Arquivados</span>
               </Link>

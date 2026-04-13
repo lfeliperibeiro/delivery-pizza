@@ -149,15 +149,16 @@ export function OrderCard({order, onRefetch, isArchived}: Order) {
       />
       <CardHeader>
         <CardAction>
-          <Badge variant="secondary" className={slaBadge.className}>
-            {slaBadge.label}
-          </Badge>
           {isArchived && (
-            <Badge variant="secondary" className="bg-slate-500 text-white flex items-center gap-1">
+            <Badge variant="secondary" className="bg-slate-500 text-white flex items-center gap-1 mb-3">
               <Archive className="h-3 w-3" />
               Arquivado
             </Badge>
           )}
+          <Badge variant="secondary" className={slaBadge.className}>
+            {slaBadge.label}
+          </Badge>
+
         </CardAction>
         <CardTitle>Pedido #{order.id}</CardTitle>
         <CardDescription>

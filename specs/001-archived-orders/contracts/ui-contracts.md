@@ -2,12 +2,12 @@
 
 **Feature**: `001-archived-orders` | **Date**: 2026-04-12
 
-## New Route: `/arquivados`
+## New Route: `/archived`
 
 ### Route Registration
 
 ```
-Path:      /arquivados
+Path:      /archived
 Parent:    Layout (protected — redirects unauthenticated users to /)
 Component: src/Pages/ArchivedOrders.tsx
 ```
@@ -21,13 +21,13 @@ Component: src/Pages/ArchivedOrders.tsx
 | Success (empty) | Orders resolved, none older than 7 days | Centered message: "Nenhum pedido arquivado encontrado." |
 | Error    | Fetch throws (network failure, non-2xx, invalid token) | Error message + "Tentar novamente" button that re-triggers the fetch |
 
-### Order Card Behavior on `/arquivados`
+### Order Card Behavior on `/archived`
 
 `<OrderCard>` is reused without modification. Archived orders may have any status (`Pending`, `Finished`, `Cancelled`). The "Finalizar ou Cancelar" and "Editar Pedido" buttons remain functional — an archived order can still be acted upon. The SLA urgency badges (red/orange border for pending orders) continue to apply.
 
 ### Sort Order
 
-Orders on `/arquivados` are sorted by `created_at` descending (most recent first among archived orders). This mirrors the intent of the home page sort but uses date rather than status as the primary key.
+Orders on `/archived` are sorted by `created_at` descending (most recent first among archived orders). This mirrors the intent of the home page sort but uses date rather than status as the primary key.
 
 ---
 
@@ -49,10 +49,10 @@ All other behavior (loading state via Suspense, sort by Pending-first, OrderCard
 
 | Property    | Value |
 |-------------|-------|
-| Label       | "Arquivados" |
+| Label       | "archived" |
 | Icon        | `Archive` (lucide-react, orange-400 fill) |
-| Link target | `/arquivados` |
-| Active rule | `location.pathname === "/arquivados"` |
+| Link target | `/archived` |
+| Active rule | `location.pathname === "/archived"` |
 | Position    | After "Analytics" (`/analytics`), before "Usuários" (`/users`) |
 
 ---

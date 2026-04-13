@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
       { path: "/users", element: <Users /> },
       { path: "/users/edit/:id", element: <EditUser /> },
       { path: "/analytics", element: <Analytics /> },
-      { path: "/arquivados", element: <ArchivedOrders /> },
+      { path: "/archived", element: <ArchivedOrders /> },
     ],
   },
 ])

@@ -42,7 +42,7 @@ function ProductsTable({ productsPromise }: { productsPromise: Promise<Product[]
       <TableCaption>Lista de produtos.</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[100px]">ID</TableHead>
+          <TableHead className="w-25">ID</TableHead>
           <TableHead>Sabor</TableHead>
           <TableHead>Preço</TableHead>
           <TableHead className="text-right">Tamanho</TableHead>

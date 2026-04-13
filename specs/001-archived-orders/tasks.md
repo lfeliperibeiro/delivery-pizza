@@ -38,7 +38,7 @@
 
 ## Phase 3: User Story 1 — View Archived Orders (Priority: P1) 🎯 MVP
 
-**Goal**: A new protected `/arquivados` page fetches orders from the existing endpoint, filters to only those older than 7 days, and renders them as `OrderCard` components with full loading, empty, and error states.
+**Goal**: A new protected `/archived` page fetches orders from the existing endpoint, filters to only those older than 7 days, and renders them as `OrderCard` components with full loading, empty, and error states.
 
 **Independent Test**: Navigate to `/archived` with an authenticated session where at least one order is older than 7 days. Verify: (1) order cards appear; (2) navigating while unauthenticated redirects to `/`; (3) when no orders are archived, the empty-state message is shown.
 
@@ -52,9 +52,9 @@
 
 - [x] T008 [US1] Add the `ArchivedOrders` page export to `src/Pages/ArchivedOrders.tsx` — wire `<Suspense fallback={<Loading />}>` around `<ArchivedOrderGrid>`, include `<Toaster />` for mutation feedback from `OrderCard` actions, and expose `refetchArchivedOrders` via `useCallback`
 
-- [x] T009 [US1] Register `/arquivados` route in `src/routes.tsx` — import `ArchivedOrders` from `./Pages/ArchivedOrders` and add `{ path: "/arquivados", element: <ArchivedOrders /> }` as a child of the existing `Layout` route, alongside the other protected routes
+- [x] T009 [US1] Register `/archived` route in `src/routes.tsx` — import `ArchivedOrders` from `./Pages/ArchivedOrders` and add `{ path: "/archived", element: <ArchivedOrders /> }` as a child of the existing `Layout` route, alongside the other protected routes
 
-- [x] T010 [US1] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) authenticate and navigate to `/arquivados`; (b) verify cards appear for orders older than 7 days; (c) verify the empty state when none qualify; (d) log out and confirm redirect to `/`; (e) verify `OrderCard` "Finalizar ou Cancelar" and "Editar Pedido" buttons still work from the archived page
+- [x] T010 [US1] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) authenticate and navigate to `/archived`; (b) verify cards appear for orders older than 7 days; (c) verify the empty state when none qualify; (d) log out and confirm redirect to `/`; (e) verify `OrderCard` "Finalizar ou Cancelar" and "Editar Pedido" buttons still work from the archived page
 
 **Checkpoint**: US1 is fully functional and independently testable at this point.
 
@@ -64,13 +64,13 @@
 
 **Goal**: The `/home` route is updated so that orders older than 7 days no longer appear. Only orders created within the last 7 days are shown.
 
-**Independent Test**: With an authenticated session that has both recent and old orders, navigate to `/home` and verify no order card older than 7 days is displayed. Navigate to `/arquivados` to confirm those orders still appear there.
+**Independent Test**: With an authenticated session that has both recent and old orders, navigate to `/home` and verify no order card older than 7 days is displayed. Navigate to `/archived` to confirm those orders still appear there.
 
 ### Implementation
 
 - [x] T011 [US2] Modify `src/Pages/Home.tsx` — in the `OrderGrid` component (or in `fetchOrders`, whichever is cleaner), apply `isOlderThanDays(order.created_at, 7) === false` to filter out archived orders before rendering; import `isOlderThanDays` from `@/lib/datetime`
 
-- [x] T012 [US2] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) confirm only orders ≤ 7 days old appear on `/home`; (b) confirm `/arquivados` shows the orders that disappeared from `/home`; (c) confirm the existing sort (Pending-first) is preserved; (d) confirm the empty state on `/home` when all orders are older than 7 days
+- [x] T012 [US2] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) confirm only orders ≤ 7 days old appear on `/home`; (b) confirm `/archived` shows the orders that disappeared from `/home`; (c) confirm the existing sort (Pending-first) is preserved; (d) confirm the empty state on `/home` when all orders are older than 7 days
 
 **Checkpoint**: US1 and US2 are both independently functional. The two pages together provide a complete archived/active split.
 
@@ -78,15 +78,15 @@
 
 ## Phase 5: User Story 3 — Navigate to Archived Orders (Priority: P3)
 
-**Goal**: A clearly labeled navigation entry in the sidebar allows operators to reach `/arquivados` without typing the URL manually.
+**Goal**: A clearly labeled navigation entry in the sidebar allows operators to reach `/archived` without typing the URL manually.
 
-**Independent Test**: From any authenticated page, locate the "Arquivados" entry in the sidebar and click it. Verify navigation to `/arquivados` and that the sidebar entry shows the active state while on that route.
+**Independent Test**: From any authenticated page, locate the "archived" entry in the sidebar and click it. Verify navigation to `/archived` and that the sidebar entry shows the active state while on that route.
 
 ### Implementation
 
-- [x] T013 [US3] Modify `src/components/Sidebar.tsx` — import `Archive` from `lucide-react`, add a new `<SidebarMenuItem>` with a `<SidebarMenuButton isActive={location.pathname === "/arquivados"}>` wrapping a `<Link to="/arquivados">` with the `Archive` icon (className `text-orange-400`) and label text `"Arquivados"`; insert this item after the "Analytics" entry and before the "Usuários" entry
+- [x] T013 [US3] Modify `src/components/Sidebar.tsx` — import `Archive` from `lucide-react`, add a new `<SidebarMenuItem>` with a `<SidebarMenuButton isActive={location.pathname === "/archived"}>` wrapping a `<Link to="/archived">` with the `Archive` icon (className `text-orange-400`) and label text `"archived"`; insert this item after the "Analytics" entry and before the "Usuários" entry
 
-- [x] T014 [US3] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) confirm the "Arquivados" entry appears in the sidebar on all protected pages; (b) confirm the orange Archive icon is visible; (c) confirm active highlighting when on `/arquivados`; (d) confirm clicking navigates correctly; (e) confirm no regression in other sidebar links
+- [x] T014 [US3] Manual validation — run `pnpm lint && pnpm typecheck && pnpm build`, then manually: (a) confirm the "archived" entry appears in the sidebar on all protected pages; (b) confirm the orange Archive icon is visible; (c) confirm active highlighting when on `/archived`; (d) confirm clicking navigates correctly; (e) confirm no regression in other sidebar links
 
 **Checkpoint**: All three user stories are independently functional. Feature is complete.
 
@@ -97,7 +97,7 @@
 **Purpose**: Final quality pass across all changes.
 
 - [x] T015 [P] Run full quality gate: `pnpm lint && pnpm typecheck && pnpm build` — confirm zero errors and zero warnings
-- [ ] T016 [P] Cross-route regression check — manually navigate through `/home`, `/arquivados`, `/orders`, `/users`, `/analytics` to confirm no regressions in layout, auth, or localization
+- [ ] T016 [P] Cross-route regression check — manually navigate through `/home`, `/archived`, `/orders`, `/users`, `/analytics` to confirm no regressions in layout, auth, or localization
 - [ ] T017 Verify Brazilian localization is preserved on `OrderCard` in the archived view — confirm `created_at` renders via `formatDateTime` (pt-BR, America/Sao_Paulo), currency shows `R$` format, and status labels translate correctly (`Pendente`, `Concluído`, `Cancelado`)
 
 ---
@@ -110,7 +110,7 @@
 - **Foundational (Phase 2)**: Depends on Setup — **blocks US1 and US2**
 - **US1 (Phase 3)**: Depends on Foundational (T004 must be complete)
 - **US2 (Phase 4)**: Depends on Foundational (T004 must be complete); independent of US1
-- **US3 (Phase 5)**: Depends only on `routes.tsx` having `/arquivados` registered (T009); can begin in parallel with Phase 4
+- **US3 (Phase 5)**: Depends only on `routes.tsx` having `/archived` registered (T009); can begin in parallel with Phase 4
 - **Polish (Phase 6)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
@@ -145,13 +145,13 @@ Task C: US3 — Modify src/components/Sidebar.tsx (T013) [also needs T009 done]
 1. Complete Phase 1: Setup (T001–T003)
 2. Complete Phase 2: Foundational (T004)
 3. Complete Phase 3: User Story 1 (T005–T010)
-4. **STOP and VALIDATE**: `/arquivados` works end-to-end
+4. **STOP and VALIDATE**: `/archived` works end-to-end
 5. Deploy/demo if ready — operators can already access the archived page via URL
 
 ### Incremental Delivery
 
 1. Setup + Foundational → `isOlderThanDays` utility available
-2. US1 → `/arquivados` page fully functional (MVP)
+2. US1 → `/archived` page fully functional (MVP)
 3. US2 → `/home` now hides old orders (completes the active/archived split)
 4. US3 → Sidebar navigation entry added (discoverability complete)
 5. Polish → Full quality gate passed
