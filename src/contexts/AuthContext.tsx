@@ -141,7 +141,7 @@ function resolveLoginResult(token: string, authPayload?: unknown): { snapshot: A
 
   const jwtPayload = parseJwtPayload(token)
   if (jwtPayload) {
-    for (const key of ["name", "username", "full_name", "email", "sub"]) {
+    for (const key of ["name", "username", "full_name", "email"]) {
       const value = extractDisplayName(jwtPayload[key])
       if (value) {
         return {

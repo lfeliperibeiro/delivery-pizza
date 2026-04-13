@@ -1,4 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { createElement, Fragment } from "react"
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { api } from "@/api"
+import { AuthProvider, useAuth } from "./AuthContext"
+
+vi.mock("@/api", () => ({
+  api: {
+    get: vi.fn(),
+  },
+}))
 
 function parseJwtPayload(token: string): Record<string, unknown> | null {
   const [, payload] = token.split(".")
@@ -69,6 +79,49 @@ function makeJwt(payload: Record<string, unknown>): string {
     .replace(/\//g, "_")
     .replace(/=+$/, "")
   return `header.${encoded}.signature`
+}
+
+function AuthProbe() {
+  const { displayName, identityStatus, isAuthenticated } = useAuth()
+
+  return createElement(
+    Fragment,
+    null,
+    createElement("span", { "data-testid": "display-name" }, displayName ?? "null"),
+    createElement("span", { "data-testid": "identity-status" }, identityStatus),
+    createElement("span", { "data-testid": "is-authenticated" }, String(isAuthenticated)),
+  )
+}
+
+function AuthControls() {
+  const { displayName, identityStatus, isAuthenticated, token, login, logout } = useAuth()
+
+  return createElement(
+    Fragment,
+    null,
+    createElement("span", { "data-testid": "control-display-name" }, displayName ?? "null"),
+    createElement("span", { "data-testid": "control-identity-status" }, identityStatus),
+    createElement("span", { "data-testid": "control-token" }, token ?? "null"),
+    createElement("span", { "data-testid": "control-authenticated" }, String(isAuthenticated)),
+    createElement(
+      "button",
+      {
+        onClick: () =>
+          login(makeJwt({ user_id: 7, email: "maria@email.com" }), {
+            user: { name: "Maria Oliveira" },
+          }),
+      },
+      "login-with-payload",
+    ),
+    createElement(
+      "button",
+      {
+        onClick: () => login(makeJwt({ email: "joao@email.com" })),
+      },
+      "login-with-jwt",
+    ),
+    createElement("button", { onClick: logout }, "logout"),
+  )
 }
 
 describe("parseJwtPayload", () => {
@@ -276,5 +329,148 @@ describe("parseStoredSnapshot via localStorage", () => {
       result = null
     }
     expect(result).toBeNull()
+  })
+})
+
+describe("AuthProvider integration", () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it("hidrata o nome a partir do claim name quando não existe auth_user salvo", () => {
+    localStorage.setItem("access_token", makeJwt({ name: "João da Silva" }))
+
+    render(createElement(AuthProvider, null, createElement(AuthProbe)))
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("João da Silva")
+    expect(screen.getByTestId("identity-status")).toHaveTextContent("fallback")
+    expect(screen.getByTestId("is-authenticated")).toHaveTextContent("true")
+    expect(api.get).not.toHaveBeenCalled()
+  })
+
+  it("busca o nome real no perfil quando o token só tem sub numérico", async () => {
+    localStorage.setItem("access_token", makeJwt({ sub: "42" }))
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: { user: { id: 42, name: "Maria Oliveira" } },
+    })
+
+    render(createElement(AuthProvider, null, createElement(AuthProbe)))
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("Usuario")
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith("/users/user/42", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("display-name")).toHaveTextContent("Maria Oliveira")
+    })
+
+    expect(JSON.parse(localStorage.getItem("auth_user") ?? "{}")).toEqual({
+      displayName: "Maria Oliveira",
+      source: "profile",
+    })
+  })
+
+  it("usa snapshot salvo válido ao iniciar", () => {
+    localStorage.setItem("access_token", makeJwt({ sub: "42" }))
+    localStorage.setItem(
+      "auth_user",
+      JSON.stringify({ displayName: "Snapshot User", source: "profile" }),
+    )
+
+    render(createElement(AuthProvider, null, createElement(AuthProbe)))
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("Snapshot User")
+    expect(screen.getByTestId("identity-status")).toHaveTextContent("fallback")
+    expect(api.get).not.toHaveBeenCalled()
+  })
+
+  it("ignora snapshot salvo inválido e volta para o melhor fallback do token", () => {
+    localStorage.setItem("access_token", makeJwt({ email: "fallback@email.com" }))
+    localStorage.setItem(
+      "auth_user",
+      JSON.stringify({ displayName: "   ", source: "invalid-source" }),
+    )
+
+    render(createElement(AuthProvider, null, createElement(AuthProbe)))
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("fallback@email.com")
+    expect(screen.getByTestId("identity-status")).toHaveTextContent("fallback")
+  })
+
+  it("mantém fallback quando o perfil não retorna nome utilizável", async () => {
+    localStorage.setItem("access_token", makeJwt({ sub: "42" }))
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: { user: { id: 42 } },
+    })
+
+    render(createElement(AuthProvider, null, createElement(AuthProbe)))
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("Usuario")
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith("/users/user/42", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
+      })
+    })
+
+    expect(screen.getByTestId("display-name")).toHaveTextContent("Usuario")
+    expect(localStorage.getItem("auth_user")).toBeNull()
+  })
+
+  it("permite login com payload e logout limpando estado e storage", async () => {
+    render(createElement(AuthProvider, null, createElement(AuthControls)))
+
+    fireEvent.click(screen.getByRole("button", { name: "login-with-payload" }))
+
+    expect(screen.getByTestId("control-display-name")).toHaveTextContent("Maria Oliveira")
+    expect(screen.getByTestId("control-identity-status")).toHaveTextContent("resolved")
+    expect(screen.getByTestId("control-authenticated")).toHaveTextContent("true")
+    expect(localStorage.getItem("access_token")).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem("auth_user") ?? "{}")).toEqual({
+      displayName: "Maria Oliveira",
+      source: "login-response",
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "logout" }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("control-display-name")).toHaveTextContent("null")
+    })
+
+    expect(screen.getByTestId("control-identity-status")).toHaveTextContent("anonymous")
+    expect(screen.getByTestId("control-authenticated")).toHaveTextContent("false")
+    expect(screen.getByTestId("control-token")).toHaveTextContent("null")
+    expect(localStorage.getItem("access_token")).toBeNull()
+    expect(localStorage.getItem("auth_user")).toBeNull()
+  })
+
+  it("faz login usando claim do jwt quando não há payload", () => {
+    render(createElement(AuthProvider, null, createElement(AuthControls)))
+
+    fireEvent.click(screen.getByRole("button", { name: "login-with-jwt" }))
+
+    expect(screen.getByTestId("control-display-name")).toHaveTextContent("joao@email.com")
+    expect(screen.getByTestId("control-identity-status")).toHaveTextContent("fallback")
+    expect(JSON.parse(localStorage.getItem("auth_user") ?? "{}")).toEqual({
+      displayName: "joao@email.com",
+      source: "jwt-claim",
+    })
+  })
+})
+
+describe("useAuth", () => {
+  it("lança erro quando usado fora do provider", () => {
+    expect(() => render(createElement(AuthProbe))).toThrow(
+      "useAuth must be used within an AuthProvider",
+    )
   })
 })
