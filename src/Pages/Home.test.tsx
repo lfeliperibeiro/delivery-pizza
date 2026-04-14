@@ -19,13 +19,14 @@ vi.mock("@/components/OrderCard", () => ({
     order,
     onRefetch,
   }: {
-    order: { id: number; status: string; items: Array<{ product_id: number; quantity: number }> }
+    order: { id: number; status: string; items: Array<{ product_id: number; quantity: number; name?: string }> }
     onRefetch?: () => void
   }) => (
     <div data-testid="order-card">
       <span>{order.id}</span>
       <span>{order.status}</span>
       <span>{order.items.length}</span>
+      <span>{order.items.map((item) => item.name ?? `Produto #${item.product_id}`).join(",")}</span>
       <button type="button" onClick={onRefetch}>
         refetch-{order.id}
       </button>
@@ -54,7 +55,7 @@ describe("Home", () => {
   }
 
   it("mostra loading enquanto carrega os pedidos", async () => {
-    vi.mocked(api.get).mockImplementationOnce(
+    vi.mocked(api.get).mockImplementation(
       () => new Promise(() => undefined),
     )
 
@@ -64,57 +65,69 @@ describe("Home", () => {
   })
 
   it("carrega, normaliza e ordena pedidos pendentes primeiro", async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: [
-        {
-          order_id: 2,
-          status: "Finished",
-          total_price: 60,
-          products: [{ product_id: 2, quantity: 1 }],
-          created_at: getRecentDate(),
-          notes: "Sem cebola",
-          payment_method: "Pix",
-        },
-        {
-          order_id: 1,
-          status: "Pending",
-          total_price: 45,
-          products: [{ product_id: 1, quantity: 2 }],
-          created_at: getRecentDate(),
-          notes: null,
-          payment_method: "Cartao",
-        },
-      ],
-    })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 2,
+            status: "Finished",
+            total_price: 60,
+            products: [{ product_id: 2, quantity: 1 }],
+            created_at: getRecentDate(),
+            notes: "Sem cebola",
+            payment_method: "Pix",
+          },
+          {
+            order_id: 1,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: getRecentDate(),
+            notes: null,
+            payment_method: "Cartao",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          { product_id: 1, name: "Calabresa" },
+          { product_id: 2, name: "Frango" },
+        ],
+      })
 
     await renderHome()
 
     await waitFor(() => {
       expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user")
+      expect(api.get).toHaveBeenCalledWith("/orders/list")
     })
 
     const cards = await screen.findAllByTestId("order-card")
     expect(cards).toHaveLength(2)
     expect(cards[0]).toHaveTextContent("1")
     expect(cards[0]).toHaveTextContent("Pending")
+    expect(cards[0]).toHaveTextContent("Calabresa")
     expect(cards[1]).toHaveTextContent("2")
     expect(cards[1]).toHaveTextContent("Finished")
+    expect(cards[1]).toHaveTextContent("Frango")
   })
 
   it("filtra pedidos com mais de sete dias", async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: [
-        {
-          order_id: 1,
-          status: "Pending",
-          total_price: 45,
-          products: [],
-          created_at: getOldDate(),
-          notes: null,
-          payment_method: null,
-        },
-      ],
-    })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 1,
+            status: "Pending",
+            total_price: 45,
+            products: [],
+            created_at: getOldDate(),
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ data: [] })
 
     await renderHome()
 
@@ -123,9 +136,11 @@ describe("Home", () => {
   })
 
   it("mostra estado vazio quando a api retorna formato invalido", async () => {
-    vi.mocked(api.get).mockResolvedValue({
-      data: { orders: [] },
-    })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: { orders: [] },
+      })
+      .mockResolvedValueOnce({ data: [] })
 
     await renderHome()
 
@@ -156,6 +171,9 @@ describe("Home", () => {
         ],
       })
       .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa" }],
+      })
+      .mockResolvedValueOnce({
         data: [
           {
             order_id: 2,
@@ -168,13 +186,16 @@ describe("Home", () => {
           },
         ],
       })
+      .mockResolvedValueOnce({
+        data: [{ product_id: 2, name: "Frango" }],
+      })
 
     await renderHome()
 
     fireEvent.click(await screen.findByRole("button", { name: "refetch-1" }))
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledTimes(2)
+      expect(api.get).toHaveBeenCalledTimes(4)
     })
 
     expect(await screen.findByRole("button", { name: "refetch-2" })).toBeInTheDocument()

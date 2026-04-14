@@ -106,7 +106,7 @@ describe("OrderCard", () => {
       id: 12,
       status: "Pending",
       price: 50,
-      items: [{ product_id: 1, quantity: 2 }],
+      items: [{ product_id: 1, quantity: 2, name: "Calabresa" }],
       created_at: "2026-04-12T14:30:00Z",
       notes: "Sem cebola",
       payment_method: "Pix",
@@ -126,7 +126,7 @@ describe("OrderCard", () => {
 
     expect(screen.getByText("Pedido dentro do prazo")).toBeInTheDocument()
     expect(screen.getByText("Pedido #12")).toBeInTheDocument()
-    expect(screen.getByText("2x Produto #1")).toBeInTheDocument()
+    expect(screen.getByText("2x Calabresa")).toBeInTheDocument()
     expect(screen.getByText("Pagamento: Pix")).toBeInTheDocument()
     expect(screen.getByText("Obs: Sem cebola")).toBeInTheDocument()
     expect(screen.getByText(/Total: R\$ 50,00/)).toBeInTheDocument()
@@ -216,5 +216,13 @@ describe("OrderCard", () => {
   it("não mostra badge Arquivado quando isArchived não é passado", () => {
     renderOrderCard()
     expect(screen.queryByText("Arquivado")).not.toBeInTheDocument()
+  })
+
+  it("mostra fallback do produto quando o nome não é fornecido", () => {
+    renderOrderCard({
+      items: [{ product_id: 1, quantity: 2 }],
+    })
+
+    expect(screen.getByText("2x Produto #1")).toBeInTheDocument()
   })
 })

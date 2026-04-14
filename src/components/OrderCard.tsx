@@ -18,8 +18,9 @@ import { formatDateTime, parseBackendDateTime } from "@/lib/datetime"
 import { useNavigate } from "react-router-dom"
 
 export interface OrderItem {
-  product_id: number,
-  quantity: number,
+  product_id: number
+  quantity: number
+  name?: string
 }
 
 interface OrderCardProps {
@@ -167,7 +168,7 @@ export function OrderCard({order, onRefetch, isArchived}: Order) {
               {order.items.map((item, index) => (
                 <>
                 <li key={index} className="text-sm">
-                  {item.quantity}x Produto #{item.product_id}
+                  {item.quantity}x {item.name ?? `Produto #${item.product_id}`}
                 </li>
                 </>
               ))}

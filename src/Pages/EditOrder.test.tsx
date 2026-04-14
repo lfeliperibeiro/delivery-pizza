@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import type { Mock } from "vitest"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { api } from "@/api"
 import { toast } from "sonner"
@@ -6,6 +7,16 @@ import { EditOrder } from "./EditOrder"
 
 const mockNavigate = vi.fn()
 let mockSearchParams = new URLSearchParams("id=12")
+
+function makeJwt(payload: Record<string, unknown>): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload))
+  const binaryStr = Array.from(bytes, (b) => String.fromCharCode(b)).join("")
+  const encoded = btoa(binaryStr)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "")
+  return `header.${encoded}.signature`
+}
 
 vi.mock("@/api", () => ({
   api: {
@@ -33,12 +44,18 @@ vi.mock("@/components/Select", () => ({
     onValuesChange?: (values: string[] | null) => void
   }) => (
     <div>
-      <div data-testid="select-values">{(values ?? []).join(",")}</div>
+      <div data-testid="select-values">{(values ?? []).join(",") || "Selecione os produtos"}</div>
       {products.map((product) => (
         <button
           key={product.id}
           type="button"
-          onClick={() => onValuesChange?.([String(product.id)])}
+          onClick={() =>
+            onValuesChange?.(
+              (values ?? []).includes(String(product.id))
+                ? (values ?? []).filter((value) => value !== String(product.id))
+                : [...(values ?? []), String(product.id)],
+            )
+          }
         >
           {product.name}
         </button>
@@ -69,143 +86,358 @@ describe("EditOrder", () => {
     return render(<EditOrder />)
   }
 
-  it("carrega produtos quando a tela monta", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: [{ id: 1, name: "Calabresa", price: 45, size: "Grande" }],
-    })
+  function getProductQuantityInputs() {
+    return screen.getAllByRole("spinbutton") as HTMLInputElement[]
+  }
+
+  function getProductQuantityInput(index: number) {
+    return getProductQuantityInputs()[index]
+  }
+
+  function mockProductsAndOrder(
+    orderData: unknown,
+    productData = [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+  ) {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: productData })
+      .mockResolvedValueOnce({ data: orderData })
+  }
+
+  it("carrega produtos disponíveis e preenche o pedido atual", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [
+          { product_id: 1, name: "Calabresa", price: 45, size: "Grande" },
+          { product_id: 2, name: "Portuguesa", price: 50, size: "Media" },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 90,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
 
     renderEditOrder()
 
     await waitFor(() => {
       expect(api.get).toHaveBeenCalledWith("/orders/list")
+      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user")
     })
 
     expect(await screen.findByRole("button", { name: "Calabresa" })).toBeInTheDocument()
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
+    expect(screen.getByTestId("select-values")).toHaveTextContent("1")
+
+    expect(getProductQuantityInput(0).value).toBe("2")
   })
 
-  it("aceita payload com data.products ao carregar produtos", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: {
-        products: [{ id: 2, name: "Portuguesa", price: 50, size: "Media" }],
-      },
-    })
+  it("valida seleção de produto antes de enviar", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 45,
+            products: [],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
 
     renderEditOrder()
 
-    expect(await screen.findByRole("button", { name: "Portuguesa" })).toBeInTheDocument()
-  })
-
-  it("valida seleção de produto, usuário e quantidade", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: [] })
-
-    renderEditOrder()
-
-    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
-    expect(toast.error).toHaveBeenCalledWith("Selecione ao menos um produto")
-  })
-
-  it("valida quantidade obrigatória antes de enviar", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: [{ id: 1, name: "Calabresa", price: 45, size: "Grande" }],
-    })
-
-    renderEditOrder()
-
-    fireEvent.change(screen.getByLabelText(/id do usuário/i), {
-      target: { value: "7" },
-    })
+    await screen.findByRole("button", { name: "Calabresa" })
     fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
 
     expect(toast.error).toHaveBeenCalledWith("Selecione ao menos um produto")
+    expect(api.put).not.toHaveBeenCalled()
   })
 
-  it("envia a edição do pedido com sucesso e navega para home", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: [{ id: 1, name: "Calabresa", price: 45, size: "Grande" }],
-    })
+  it("valida quantidade inválida para qualquer produto antes de enviar", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 1 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
+
+    renderEditOrder()
+
+    await screen.findByText("Quantidade por produto")
+    fireEvent.change(getProductQuantityInput(0), { target: { value: "0" } })
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(toast.error).toHaveBeenCalledWith("Informe uma quantidade válida para todos os produtos")
+    expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it("envia a edição com id e quantidades por produto e navega para home", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [
+          { product_id: 1, name: "Calabresa", price: 45, size: "Grande" },
+          { product_id: 2, name: "Portuguesa", price: 50, size: "Media" },
+        ],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
     vi.mocked(api.put).mockResolvedValueOnce({})
-    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout")
 
     renderEditOrder()
 
-    const productButton = await screen.findByRole("button", { name: "Calabresa" })
+    await screen.findByRole("button", { name: "Calabresa" })
+    vi.useFakeTimers()
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText(/id do usuário/i), {
-      target: { value: "7" },
-    })
-    fireEvent.click(productButton)
-    fireEvent.change(screen.getByLabelText(/quantidade/i), {
-      target: { value: "3" },
-    })
+    fireEvent.click(screen.getByRole("button", { name: "Portuguesa" }))
+
+    expect(getProductQuantityInputs()).toHaveLength(2)
+    fireEvent.change(getProductQuantityInput(0), { target: { value: "2" } })
+    fireEvent.change(getProductQuantityInput(1), { target: { value: "3" } })
     fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
 
-    await waitFor(() => {
-      expect(api.put).toHaveBeenCalledWith(
-        "/orders/order/edit/12",
-        {
-          user_id: 7,
-          products: [{ product_id: 1, quantity: 3 }],
-        },
-      )
+    expect(api.put).toHaveBeenCalledWith("/orders/order/edit/12", {
+      id: 12,
+      user_id: 7,
+      products: [
+        { product_id: 1, quantity: 2 },
+        { product_id: 2, quantity: 3 },
+      ],
+    })
+
+    await act(async () => {
+      await Promise.resolve()
     })
 
     expect(toast.success).toHaveBeenCalledWith("Pedido editado com sucesso")
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000)
+    expect(mockNavigate).not.toHaveBeenCalled()
+    act(() => {
+      vi.advanceTimersByTime(1999)
+    })
+    expect(mockNavigate).not.toHaveBeenCalled()
+    act(() => {
+      vi.advanceTimersByTime(1)
+    })
+    expect(mockNavigate).toHaveBeenCalledWith("/home")
   })
 
   it("mostra erro quando a edição falha", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: [{ id: 1, name: "Calabresa", price: 45, size: "Grande" }],
-    })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
     vi.mocked(api.put).mockRejectedValueOnce(new Error("boom"))
 
     renderEditOrder()
 
-    const productButton = await screen.findByRole("button", { name: "Calabresa" })
+    await screen.findByRole("button", { name: "Calabresa" })
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText(/id do usuário/i), {
-      target: { value: "7" },
-    })
-    fireEvent.click(productButton)
-    fireEvent.change(screen.getByLabelText(/quantidade/i), {
-      target: { value: "2" },
-    })
     fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
 
     await waitFor(() => {
-      expect(api.put).toHaveBeenCalledWith(
-        "/orders/order/edit/12",
-        {
-          user_id: 7,
-          products: [{ product_id: 1, quantity: 2 }],
-        },
-      )
+      expect(api.put).toHaveBeenCalledWith("/orders/order/edit/12", {
+        id: 12,
+        user_id: 7,
+        products: [{ product_id: 1, quantity: 2 }],
+      })
     })
 
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Erro ao editar pedido")
+    await act(async () => {
+      await Promise.resolve()
     })
+
+    expect(toast.error).toHaveBeenCalledWith("Erro ao editar pedido")
+  })
+
+  it("mantém o formulário bloqueado quando o pedido não é encontrado", async () => {
+    mockProductsAndOrder([
+      {
+        order_id: 99,
+        user_id: 8,
+        status: "Pending",
+        total_price: 45,
+        products: [{ product_id: 1, quantity: 2 }],
+        created_at: "2026-04-13T10:00:00Z",
+        notes: null,
+        payment_method: null,
+      },
+    ])
+
+    renderEditOrder()
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith("/orders/list")
+      expect(api.get).toHaveBeenCalledWith("/orders/list_order/order_user")
+    })
+
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
+    expect(screen.getByTestId("select-values")).toHaveTextContent("Selecione os produtos")
+    expect(screen.queryByText("Quantidade por produto")).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Calabresa" }))
+    expect(screen.getByTestId("select-values")).toHaveTextContent("Selecione os produtos")
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(toast.error).toHaveBeenCalledWith("Pedido não encontrado")
+    expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it("trata pedido sem user_id válido como pedido indisponível", async () => {
+    mockProductsAndOrder([
+      {
+        order_id: 12,
+        user_id: null,
+        status: "Pending",
+        total_price: 45,
+        products: [{ product_id: 1, quantity: 2 }],
+        created_at: "2026-04-13T10:00:00Z",
+        notes: null,
+        payment_method: null,
+      },
+    ])
+
+    renderEditOrder()
+
+    await screen.findByRole("button", { name: "Calabresa" })
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(toast.error).toHaveBeenCalledWith("Pedido não encontrado")
+    expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it("mantém o pedido carregado usando user_id do token quando a resposta não traz esse campo", async () => {
+    localStorage.setItem("access_token", makeJwt({ user_id: 7 }))
+    mockProductsAndOrder([
+      {
+        order_id: 12,
+        status: "Pending",
+        total_price: 45,
+        products: [{ product_id: 1, quantity: 2 }],
+        created_at: "2026-04-13T10:00:00Z",
+        notes: null,
+        payment_method: null,
+      },
+    ])
+    vi.mocked(api.put).mockResolvedValueOnce({})
+
+    renderEditOrder()
+
+    await screen.findByRole("button", { name: "Calabresa" })
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(api.put).toHaveBeenCalledWith("/orders/order/edit/12", {
+      id: 12,
+      user_id: 7,
+      products: [{ product_id: 1, quantity: 2 }],
+    })
+  })
+
+  it("lida com falha ao carregar dados iniciais sem rejeição não tratada e mantém o submit bloqueado", async () => {
+    const rejectedGet = api.get as Mock
+    rejectedGet
+      .mockRejectedValueOnce(new Error("list failed"))
+      .mockRejectedValueOnce(new Error("order failed"))
+
+    renderEditOrder()
+
+    await waitFor(() => {
+      expect(rejectedGet).toHaveBeenCalledWith("/orders/list")
+      expect(rejectedGet).toHaveBeenCalledWith("/orders/list_order/order_user")
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(toast.error).toHaveBeenCalledWith("Pedido não encontrado")
+    expect(api.put).not.toHaveBeenCalled()
   })
 
   it("valida id do pedido inválido", async () => {
     mockSearchParams = new URLSearchParams("")
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: [{ id: 1, name: "Calabresa", price: 45, size: "Grande" }],
-    })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            user_id: 7,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
 
     renderEditOrder()
 
-    const productButton = await screen.findByRole("button", { name: "Calabresa" })
+    await screen.findByRole("button", { name: "Calabresa" })
+    fireEvent.click(screen.getByRole("button", { name: "Calabresa" }))
+    expect(screen.queryByLabelText(/id do usuário/i)).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText(/id do usuário/i), {
-      target: { value: "7" },
-    })
-    fireEvent.click(productButton)
-    fireEvent.change(screen.getByLabelText(/quantidade/i), {
-      target: { value: "1" },
-    })
     fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
 
     expect(toast.error).toHaveBeenCalledWith("ID do pedido inválido")
+    expect(api.put).not.toHaveBeenCalled()
   })
 })

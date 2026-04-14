@@ -15,18 +15,41 @@ interface Order {
   payment_method: string | null,
 }
 
+interface RawProduct {
+  product_id: number
+  name: string
+}
+
+function buildProductNames(data: unknown): Record<number, string> {
+  if (!Array.isArray(data)) return {}
+
+  return (data as RawProduct[]).reduce<Record<number, string>>((acc, product) => {
+    acc[product.product_id] = product.name
+    return acc
+  }, {})
+}
+
 async function fetchOrders(): Promise<Order[]> {
   try {
-    const response = await api.get("/orders/list_order/order_user")
-    const data = response.data
+    const [ordersRes, productsRes] = await Promise.all([
+      api.get("/orders/list_order/order_user"),
+      api.get("/orders/list"),
+    ])
+
+    const data = ordersRes.data
     if (!Array.isArray(data)) return []
+
+    const productNames = buildProductNames(productsRes.data)
 
     return data
       .map((o) => ({
         id: o.order_id,
         status: o.status,
         price: o.total_price,
-        items: o.products ?? [],
+        items: (o.products ?? []).map((item: OrderItem) => ({
+          ...item,
+          name: productNames[item.product_id],
+        })),
         created_at: o.created_at,
         notes: o.notes,
         payment_method: o.payment_method,
