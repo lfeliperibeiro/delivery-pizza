@@ -1,88 +1,151 @@
-# Design: Edit Order ID In Payload
+# Design: Edit Order With Current Products And ID In Payload
 
 **Date:** 2026-04-13
 **Status:** Approved
 
 ## Summary
 
-Update the order editing request so the order `id` is sent automatically inside the request body, without requiring any manual input from the user.
+Update `EditOrder` so it loads the current order data automatically, uses the same product-selection pattern as `CreateOrder`, preserves each selected product's quantity, and sends the order `id` inside the edit payload.
 
 ## Problem
 
-The `EditOrder` page already reads the order `id` from the URL and uses it in the `PUT /orders/order/edit/{id}` endpoint. However, the request body does not include this `id`.
+The current `EditOrder` form differs from `CreateOrder` in two important ways:
 
-The desired backend contract is to send the same order `id` in the payload as `id`, while keeping it automatic and invisible to the user.
+- it stores selected products as `product_ids` plus one shared `quantity`;
+- it does not preload the current order's products and quantities.
+
+That structure prevents the edit screen from behaving like the create screen, and it also means the request body does not include the order `id` required by the backend contract.
 
 ## Solution
 
-Keep the current URL-based `id` lookup in `src/Pages/EditOrder.tsx` and include `id` in the body passed to `api.put(...)`.
-
-The request will continue using the existing endpoint path:
+Keep reading the order `id` from the URL query string, but change the edit form state to match `CreateOrder`:
 
 ```ts
-`/orders/order/edit/${orderData.id}`
+interface ProductEntry {
+  product_id: number
+  quantity: number
+}
+```
+
+The page will load:
+
+1. available products from `/orders/list` for the select options;
+2. current order data from `/orders/list_order/order_user`, locating the edited order by `order_id`.
+
+After the order is found, the form will be prefilled with:
+
+- `user_id`
+- selected `products`
+- each product's current `quantity`
+
+The submit request will continue using:
+
+```ts
+`/orders/order/edit/${orderId}`
 ```
 
 The payload will become:
 
 ```ts
 {
-  id: orderData.id,
+  id: orderId,
   user_id: orderData.user_id,
-  products: orderData.product_ids.map((productId) => ({
-    product_id: productId,
-    quantity: orderData.quantity!,
-  })),
+  products: orderData.products,
 }
 ```
-
-This keeps the current navigation and validation behavior unchanged while satisfying the new backend requirement.
 
 ## Architecture
 
 ### `src/Pages/EditOrder.tsx`
 
-- Keep reading the order `id` from the URL through the current search param flow.
-- Keep the existing validation that blocks submission when the `id` is missing or invalid.
-- Update the `api.put(...)` body to include `id: orderData.id`.
-- Do not add any visible `id` input to the form.
+- Keep reading `id` from `useSearchParams()`.
+- Replace the current edit state shape:
+  - remove `product_ids`
+  - remove shared `quantity`
+  - add `products: Array<{ product_id: number; quantity: number }>`
+- Reuse the same select behavior already implemented in `CreateOrder`:
+  - selecting products builds the `products` array
+  - already selected products keep their previous quantity
+  - newly selected products start with quantity `1`
+- Render a "Quantidade por produto" section below the select, just like `CreateOrder`.
+- Load the order being edited from `/orders/list_order/order_user` and prefill the form using the matching `order_id`.
+- Include `id` in the `api.put(...)` body.
+
+### Data loading strategy
+
+- `GET /orders/list` remains responsible only for available product options.
+- `GET /orders/list_order/order_user` provides the current order collection.
+- `EditOrder` finds the current order by comparing the URL `id` with `order_id`.
+- The matched order must provide:
+  - `order_id`
+  - `user_id`
+  - `products`
 
 ### `src/Pages/EditOrder.test.tsx`
 
-- Update the success test to expect `id` in the request body.
-- Update the API failure test to expect `id` in the request body.
-- Keep the invalid `id` validation test to confirm the request is still blocked when the URL does not provide a valid order id.
+Tests should cover:
+
+- loading available products for the select;
+- preloading the selected products and quantities from the current order;
+- updating quantity for a selected product;
+- submitting `id`, `user_id`, and `products` in the correct shape;
+- showing an error when the edit request fails;
+- blocking submission when the URL `id` is invalid;
+- blocking submission when any selected product has invalid quantity.
 
 ## Data Flow
 
-1. The page reads `id` from the URL on mount.
-2. The user fills `user_id`, selected products, and quantity.
-3. On submit, the page validates all required fields.
-4. If valid, the page sends a `PUT` request to `/orders/order/edit/{id}`.
-5. The request body includes `id`, `user_id`, and `products`.
-6. On success, the page shows a success toast and navigates to `/home`.
-7. On failure, the page shows an error toast.
+1. The page reads `id` from the URL.
+2. The page loads product options from `/orders/list`.
+3. The page loads orders from `/orders/list_order/order_user`.
+4. The page finds the current order by `order_id === id`.
+5. The form is initialized with the current order's `user_id` and `products`.
+6. The user changes product selection and per-product quantities.
+7. On submit, the page validates:
+   - valid `id`
+   - valid `user_id`
+   - at least one product selected
+   - valid quantity for every selected product
+8. If valid, the page sends:
+
+```ts
+{
+  id,
+  user_id,
+  products,
+}
+```
+
+9. On success, the page shows a success toast and navigates to `/home`.
+10. On failure, the page shows an error toast.
 
 ## Error Handling
 
-No new error states are introduced.
+No backend contract changes are required beyond adding `id` to the request body.
 
-Existing validation remains responsible for preventing submission when:
-- no product is selected;
-- `user_id` is invalid;
-- `quantity` is invalid;
-- the order `id` from the URL is missing or invalid.
+Validation remains on the client for:
+
+- invalid or missing order `id`;
+- invalid `user_id`;
+- no selected products;
+- any product with invalid quantity.
+
+If the current order is not found in `/orders/list_order/order_user`, the screen should not silently invent data. The edit form should remain uninitialized for that order and submission should still be blocked by invalid state.
 
 ## Testing
 
 The implementation should verify:
 
-- successful submission sends `id` in the payload;
-- failed submission still sends `id` in the payload before surfacing the API error;
-- invalid URL `id` prevents the request from being sent.
+- `/orders/list` still populates the select;
+- `/orders/list_order/order_user` preloads the current order into the edit state;
+- changing a per-product quantity updates the submitted payload;
+- successful submission sends `id` in the body together with `products`;
+- failed submission still uses the same payload shape before surfacing the API error;
+- invalid URL `id` prevents the request;
+- invalid product quantities prevent the request.
 
 ## Out of Scope
 
-- Changing the route shape from query string to route params
-- Refactoring `EditOrder` state structure beyond what is needed for this request
-- Loading existing order data automatically into the form
+- Changing the route from query string to route params
+- Refactoring `CreateOrder` and `EditOrder` into a shared reusable component
+- Editing `notes` or `payment_method` on this screen
