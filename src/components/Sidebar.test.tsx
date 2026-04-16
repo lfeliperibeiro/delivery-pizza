@@ -46,7 +46,6 @@ function renderSidebar(initialEntry = "/home") {
     <MemoryRouter initialEntries={[initialEntry]}>
       <AuthContext.Provider
         value={{
-          token: "token",
           displayName: "Maria",
           identityStatus: "resolved",
           login: vi.fn(),
