@@ -24,7 +24,6 @@ vi.mock("sonner", () => ({
 // AuthContext mock value
 const mockLogin = vi.fn()
 const authContextValue = {
-  token: null,
   displayName: null,
   identityStatus: "anonymous" as const,
   login: mockLogin,
@@ -101,7 +100,7 @@ describe("SignIn", () => {
     await user.click(screen.getByRole("button", { name: /login/i }))
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith("meu-token", {
+      expect(mockLogin).toHaveBeenCalledWith({
         access_token: "meu-token",
         name: "João",
       })

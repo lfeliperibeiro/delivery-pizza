@@ -42,7 +42,6 @@ function renderLayoutWithAuth(
 describe("Layout", () => {
   it("renderiza a saudação com o nome do usuário autenticado", () => {
     renderLayoutWithAuth({
-      token: "token",
       displayName: "Felipe",
       identityStatus: "resolved",
       login: vi.fn(),
@@ -57,7 +56,6 @@ describe("Layout", () => {
 
   it("usa fallback legível quando o nome não está disponível", () => {
     renderLayoutWithAuth({
-      token: "token",
       displayName: null,
       identityStatus: "fallback",
       login: vi.fn(),
@@ -70,7 +68,6 @@ describe("Layout", () => {
 
   it("redireciona para a rota pública quando não autenticado", () => {
     renderLayoutWithAuth({
-      token: null,
       displayName: null,
       identityStatus: "anonymous",
       login: vi.fn(),

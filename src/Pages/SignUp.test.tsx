@@ -32,7 +32,6 @@ vi.mock("sonner", () => ({
 }))
 
 const authContextValue = {
-  token: null,
   displayName: null,
   identityStatus: "anonymous" as const,
   login: mockLogin,
@@ -128,7 +127,7 @@ describe("SignUp", () => {
     fireEvent.click(screen.getByRole("button", { name: /cadastrar/i }))
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith("novo-token", {
+      expect(mockLogin).toHaveBeenCalledWith({
         access_token: "novo-token",
         user: { name: "Maria" },
       })

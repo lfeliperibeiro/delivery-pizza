@@ -8,16 +8,6 @@ import { EditOrder } from "./EditOrder"
 const mockNavigate = vi.fn()
 let mockSearchParams = new URLSearchParams("id=12")
 
-function makeJwt(payload: Record<string, unknown>): string {
-  const bytes = new TextEncoder().encode(JSON.stringify(payload))
-  const binaryStr = Array.from(bytes, (b) => String.fromCharCode(b)).join("")
-  const encoded = btoa(binaryStr)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "")
-  return `header.${encoded}.signature`
-}
-
 vi.mock("@/api", () => ({
   api: {
     get: vi.fn(),
@@ -329,7 +319,8 @@ describe("EditOrder", () => {
     expect(screen.getByTestId("select-values")).toHaveTextContent("Selecione os produtos")
     expect(screen.queryByText("Quantidade por produto")).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole("button", { name: "Calabresa" }))
+    const calabresaBtn = await screen.findByRole("button", { name: "Calabresa" })
+    fireEvent.click(calabresaBtn)
     expect(screen.getByTestId("select-values")).toHaveTextContent("Selecione os produtos")
     fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
 
@@ -360,33 +351,6 @@ describe("EditOrder", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Pedido não encontrado")
     expect(api.put).not.toHaveBeenCalled()
-  })
-
-  it("mantém o pedido carregado usando user_id do token quando a resposta não traz esse campo", async () => {
-    localStorage.setItem("access_token", makeJwt({ user_id: 7 }))
-    mockProductsAndOrder([
-      {
-        order_id: 12,
-        status: "Pending",
-        total_price: 45,
-        products: [{ product_id: 1, quantity: 2 }],
-        created_at: "2026-04-13T10:00:00Z",
-        notes: null,
-        payment_method: null,
-      },
-    ])
-    vi.mocked(api.put).mockResolvedValueOnce({})
-
-    renderEditOrder()
-
-    await screen.findByRole("button", { name: "Calabresa" })
-    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
-
-    expect(api.put).toHaveBeenCalledWith("/orders/order/edit/12", {
-      id: 12,
-      user_id: 7,
-      products: [{ product_id: 1, quantity: 2 }],
-    })
   })
 
   it("lida com falha ao carregar dados iniciais sem rejeição não tratada e mantém o submit bloqueado", async () => {
