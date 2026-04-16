@@ -31,18 +31,19 @@ export function Select({
   onValuesChange?: (values: string[] | null) => void
 }) {
   const safeProducts = Array.isArray(products) ? products : []
-  const selectedProductName =
-    safeProducts.find((product) => String(product.id) === value)?.name || ""
 
-  const selectedProductNames = safeProducts
-    .filter((product) => (values ?? []).includes(String(product.id)))
-    .map((product) => product.name)
-
-  const triggerLabel = multiple
-    ? selectedProductNames.length > 0
-      ? selectedProductNames.join(", ")
-      : "Selecione os produtos"
-    : selectedProductName || "Selecione um produto"
+  function renderValue(current: unknown) {
+    if (Array.isArray(current) && current.length > 0) {
+      const names = safeProducts
+        .filter((p) => (current as string[]).includes(String(p.id)))
+        .map((p) => p.name)
+      return names.length > 0 ? names.join(", ") : "Selecione os produtos"
+    }
+    if (typeof current === "string" && current) {
+      return safeProducts.find((p) => String(p.id) === current)?.name ?? "Selecione um produto"
+    }
+    return multiple ? "Selecione os produtos" : "Selecione um produto"
+  }
 
   return (
     <SelectUI
@@ -57,7 +58,7 @@ export function Select({
       }}
     >
       <SelectTrigger className="w-full">
-        <SelectValue>{triggerLabel}</SelectValue>
+        <SelectValue>{renderValue}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>

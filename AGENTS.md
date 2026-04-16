@@ -135,10 +135,17 @@ const refetch = () => setPromise(fetch())
 ### Parsing defensivo de API
 `Users.tsx` trata múltiplos formatos de resposta do backend com funções `extractUsersArray()` e `normalizeUser()`.
 
+### Estados operacionais obrigatórios
+Fluxos voltados ao operador devem sempre explicitar estados de carregamento, sucesso e erro.
+- Fetches devem exibir fallback visível e apropriado ao domínio
+- Mutações como login, cadastro, criação/edição/finalização/cancelamento de pedidos e atualização de usuários devem comunicar resultado ao usuário, preferencialmente com Sonner
+- Após sucesso ou falha, a tela deve permanecer em estado coerente
+
 ### SLA de pedidos (OrderCard)
 - Calcula tempo decorrido desde a criação do pedido
 - Indicadores visuais: verde (<1h), amarelo (1–2h), vermelho (>2h)
 - Atualiza a cada minuto via `setInterval`
+- Status exibidos ao usuário devem preservar vocabulário localizado: `Pendente`, `Concluido`/`Concluído`, `Cancelado`
 
 ### Tema
 - Tecla `d` alterna dark/light
@@ -176,7 +183,20 @@ pnpm run test:coverage  # Testes com cobertura
 
 > **Importante**: este projeto usa **pnpm**. Nunca usar `npm install` ou `yarn`.
 
----
+## Gates mínimos de entrega
+
+Mudanças com destino a produção devem passar por:
+
+```bash
+pnpm run lint
+pnpm run typecheck
+pnpm run build
+```
+
+Além dos comandos acima, também é obrigatória validação manual de:
+- cada rota afetada
+- comportamento autenticado e não autenticado quando houver impacto em auth ou navegação
+- fluxos de API alterados, cobrindo sucesso e falha
 
 ## Testes
 

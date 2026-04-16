@@ -18,11 +18,16 @@ export function SignIn(){
       email: email,
       password: password,
     })
-    .then((response) => {
-      return response.data;
-    })
-    .then((data) => {
-      login(data)
+    .then((response) => response.data)
+    .then(async (data) => {
+      try {
+        const usersRes = await api.get('/users/users')
+        const users: Array<{ id: number; email: string }> = usersRes.data?.users ?? []
+        const currentUser = users.find((u) => u.email === email)
+        login({ ...data, user_id: currentUser?.id ?? null })
+      } catch {
+        login(data)
+      }
       navigate('/home')
     })
     .catch(() => {

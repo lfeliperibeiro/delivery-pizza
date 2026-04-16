@@ -25,15 +25,20 @@ export function SignUp() {
         active: false,
         admin: false,
       })
-      .then((response) => {
-        return response.data
-      })
-      .then((data) => {
+      .then((response) => response.data)
+      .then(async (data) => {
         toast.success("Usuário cadastrado com sucesso", {
           description:
             "Você será redirecionado para a página inicial em 2 segundos",
         })
-        login(data)
+        try {
+          const usersRes = await api.get('/users/users')
+          const users: Array<{ id: number; email: string }> = usersRes.data?.users ?? []
+          const currentUser = users.find((u) => u.email === username)
+          login({ ...data, user_id: currentUser?.id ?? null })
+        } catch {
+          login(data)
+        }
         setTimeout(() => navigate("/home"), 2000)
       })
       .catch(() => {

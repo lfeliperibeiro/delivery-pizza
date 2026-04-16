@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm test:coverage)",
+      "Bash(tee /tmp/cov2.txt)",
+      "Bash(awk '/% Coverage report/,/Coverage summary/')",
+      "Bash(pnpm test:coverage -- --reporter=verbose)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm test:coverage -- --reporter=text-summary)"
+    ]
+  }
+}

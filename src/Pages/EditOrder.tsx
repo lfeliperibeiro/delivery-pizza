@@ -50,17 +50,19 @@ function resolveOrderUserId(order: Record<string, unknown>, fallbackUserId: numb
 
 export function EditOrder() {
   const [searchParams] = useSearchParams()
-  const orderId = Number(searchParams.get("id"))
+  const orderId = extractNumericId(searchParams.get("id"))
   const navigate = useNavigate()
   const { userId: contextUserId } = useAuth()
 
   const [orderData, setOrderData] = useState<OrderData>({
-    id: Number.isNaN(orderId) ? null : orderId,
+    id: orderId,
     user_id: null,
     products: [],
   })
   const [products, setProducts] = useState<Product[]>([])
-  const [currentOrderStatus, setCurrentOrderStatus] = useState<CurrentOrderStatus>("idle")
+  const [currentOrderStatus, setCurrentOrderStatus] = useState<CurrentOrderStatus>(orderId ? "idle" : "not_found")
+
+  console.log(contextUserId)
 
   useEffect(() => {
     api.get("/orders/list")
@@ -87,10 +89,7 @@ export function EditOrder() {
   }, [])
 
   useEffect(() => {
-    if (!orderId || Number.isNaN(orderId)) {
-      setCurrentOrderStatus("not_found")
-      return
-    }
+    if (!orderId) return
 
     api.get("/orders/list_order/order_user")
       .then((response) => {
@@ -125,7 +124,7 @@ export function EditOrder() {
       .catch(() => {
         setCurrentOrderStatus("not_found")
       })
-  }, [orderId])
+  }, [orderId, contextUserId])
 
   function handleProductSelect(values: string[] | null) {
     if (currentOrderStatus !== "found") {
@@ -197,6 +196,7 @@ export function EditOrder() {
         <div className="flex w-full flex-col gap-2">
           <label>Produtos</label>
           <Select
+            key={currentOrderStatus}
             products={products}
             multiple
             values={selectedIds}
