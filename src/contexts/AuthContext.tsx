@@ -12,6 +12,7 @@ interface AuthUserSnapshot {
 
 interface AuthContextType {
   displayName: string | null
+  userId: number | null
   identityStatus: IdentityStatus
   login: (authPayload?: unknown) => void
   logout: () => void
@@ -39,6 +40,27 @@ function resolveDisplayNameFromPayload(authPayload: unknown): string | null {
   return extractDisplayName(payload.name)
 }
 
+function extractNumericId(input: unknown): number | null {
+  if (typeof input === "number" && Number.isFinite(input) && input > 0) return input
+  if (typeof input === "string" && /^\d+$/.test(input.trim())) {
+    const parsed = Number(input.trim())
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+  return null
+}
+
+function resolveUserIdFromPayload(authPayload: unknown): number | null {
+  if (!authPayload || typeof authPayload !== "object") return null
+  const payload = authPayload as Record<string, unknown>
+  const nestedUser = payload.user
+  if (nestedUser && typeof nestedUser === "object") {
+    const nested = nestedUser as Record<string, unknown>
+    const id = extractNumericId(nested.id) ?? extractNumericId(nested.user_id)
+    if (id) return id
+  }
+  return extractNumericId(payload.user_id) ?? extractNumericId(payload.id) ?? null
+}
+
 function resolveLoginSnapshot(authPayload?: unknown): AuthUserSnapshot {
   const payloadDisplayName = resolveDisplayNameFromPayload(authPayload)
   if (payloadDisplayName) {
@@ -50,11 +72,13 @@ function resolveLoginSnapshot(authPayload?: unknown): AuthUserSnapshot {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userSnapshot, setUserSnapshot] = useState<AuthUserSnapshot | null>(null)
+  const [userId, setUserId] = useState<number | null>(null)
 
   const login = (authPayload?: unknown) => {
     const snapshot = resolveLoginSnapshot(authPayload)
     setIsAuthenticated(true)
     setUserSnapshot(snapshot)
+    setUserId(resolveUserIdFromPayload(authPayload))
   }
 
   const logout = async () => {
@@ -65,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setIsAuthenticated(false)
     setUserSnapshot(null)
+    setUserId(null)
   }
 
   const displayName = userSnapshot?.displayName ?? null
@@ -76,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ displayName, identityStatus, login, logout, isAuthenticated }}
+      value={{ displayName, userId, identityStatus, login, logout, isAuthenticated }}
     >
       {children}
     </AuthContext.Provider>

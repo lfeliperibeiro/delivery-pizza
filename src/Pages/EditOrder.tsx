@@ -2,6 +2,7 @@ import { api } from "@/api"
 import { Select, type Product } from "@/components/Select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast, Toaster } from "sonner"
@@ -32,7 +33,7 @@ function extractNumericId(input: unknown): number | null {
   return null
 }
 
-function resolveOrderUserId(order: Record<string, unknown>): number | null {
+function resolveOrderUserId(order: Record<string, unknown>, fallbackUserId: number | null): number | null {
   const nestedUser =
     order.user && typeof order.user === "object"
       ? (order.user as Record<string, unknown>)
@@ -43,7 +44,7 @@ function resolveOrderUserId(order: Record<string, unknown>): number | null {
     extractNumericId(order.id_user) ??
     extractNumericId(nestedUser?.user_id) ??
     extractNumericId(nestedUser?.id) ??
-    null
+    fallbackUserId
   )
 }
 
@@ -51,6 +52,7 @@ export function EditOrder() {
   const [searchParams] = useSearchParams()
   const orderId = Number(searchParams.get("id"))
   const navigate = useNavigate()
+  const { userId: contextUserId } = useAuth()
 
   const [orderData, setOrderData] = useState<OrderData>({
     id: Number.isNaN(orderId) ? null : orderId,
@@ -107,7 +109,7 @@ export function EditOrder() {
           return
         }
 
-        const resolvedUserId = resolveOrderUserId(currentOrder)
+        const resolvedUserId = resolveOrderUserId(currentOrder, contextUserId)
         if (!resolvedUserId) {
           setCurrentOrderStatus("not_found")
           return

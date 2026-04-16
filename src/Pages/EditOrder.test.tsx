@@ -63,6 +63,12 @@ vi.mock("react-router-dom", async () => {
   }
 })
 
+let mockContextUserId: number | null = null
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ userId: mockContextUserId }),
+}))
+
 describe("EditOrder", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -70,6 +76,7 @@ describe("EditOrder", () => {
     vi.clearAllMocks()
     localStorage.clear()
     mockSearchParams = new URLSearchParams("id=12")
+    mockContextUserId = null
   })
 
   function renderEditOrder() {
@@ -351,6 +358,39 @@ describe("EditOrder", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Pedido não encontrado")
     expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it("mantém o pedido carregado usando userId do contexto quando a resposta não traz user_id", async () => {
+    mockContextUserId = 7
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: [{ product_id: 1, name: "Calabresa", price: 45, size: "Grande" }],
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            order_id: 12,
+            status: "Pending",
+            total_price: 45,
+            products: [{ product_id: 1, quantity: 2 }],
+            created_at: "2026-04-13T10:00:00Z",
+            notes: null,
+            payment_method: null,
+          },
+        ],
+      })
+    vi.mocked(api.put).mockResolvedValueOnce({})
+
+    renderEditOrder()
+
+    await screen.findByRole("button", { name: "Calabresa" })
+    fireEvent.click(screen.getByRole("button", { name: /editar pedido/i }))
+
+    expect(api.put).toHaveBeenCalledWith("/orders/order/edit/12", {
+      id: 12,
+      user_id: 7,
+      products: [{ product_id: 1, quantity: 2 }],
+    })
   })
 
   it("lida com falha ao carregar dados iniciais sem rejeição não tratada e mantém o submit bloqueado", async () => {

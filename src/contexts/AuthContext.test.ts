@@ -22,16 +22,17 @@ function AuthProbe() {
 }
 
 function AuthControls() {
-  const { displayName, identityStatus, isAuthenticated, login, logout } = useAuth()
+  const { displayName, userId, identityStatus, isAuthenticated, login, logout } = useAuth()
   return createElement(
     Fragment,
     null,
     createElement("span", { "data-testid": "control-display-name" }, displayName ?? "null"),
+    createElement("span", { "data-testid": "control-user-id" }, userId !== null ? String(userId) : "null"),
     createElement("span", { "data-testid": "control-identity-status" }, identityStatus),
     createElement("span", { "data-testid": "control-authenticated" }, String(isAuthenticated)),
     createElement(
       "button",
-      { onClick: () => login({ user: { name: "Maria Oliveira" } }) },
+      { onClick: () => login({ user: { name: "Maria Oliveira", id: 42 } }) },
       "login-with-payload",
     ),
     createElement(
@@ -59,14 +60,16 @@ describe("AuthProvider", () => {
     render(createElement(AuthProvider, null, createElement(AuthControls)))
     fireEvent.click(screen.getByRole("button", { name: "login-with-payload" }))
     expect(screen.getByTestId("control-display-name")).toHaveTextContent("Maria Oliveira")
+    expect(screen.getByTestId("control-user-id")).toHaveTextContent("42")
     expect(screen.getByTestId("control-identity-status")).toHaveTextContent("resolved")
     expect(screen.getByTestId("control-authenticated")).toHaveTextContent("true")
   })
 
-  it("faz login sem payload e usa nome padrão", () => {
+  it("faz login sem payload e usa nome padrão e userId null", () => {
     render(createElement(AuthProvider, null, createElement(AuthControls)))
     fireEvent.click(screen.getByRole("button", { name: "login-no-payload" }))
     expect(screen.getByTestId("control-display-name")).toHaveTextContent("Usuario")
+    expect(screen.getByTestId("control-user-id")).toHaveTextContent("null")
     expect(screen.getByTestId("control-identity-status")).toHaveTextContent("fallback")
     expect(screen.getByTestId("control-authenticated")).toHaveTextContent("true")
   })
