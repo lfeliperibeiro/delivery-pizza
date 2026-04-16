@@ -32,44 +32,6 @@ function extractNumericId(input: unknown): number | null {
   return null
 }
 
-function parseJwtPayload(token: string): Record<string, unknown> | null {
-  const [, payload] = token.split(".")
-
-  if (!payload) {
-    return null
-  }
-
-  try {
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/")
-    const padding = (4 - (normalized.length % 4)) % 4
-    const padded = normalized.padEnd(normalized.length + padding, "=")
-    const decoded = atob(padded)
-    const json = decodeURIComponent(
-      Array.from(decoded)
-        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, "0")}`)
-        .join(""),
-    )
-
-    return JSON.parse(json) as Record<string, unknown>
-  } catch {
-    return null
-  }
-}
-
-function resolveUserIdFromToken(): number | null {
-  const token = localStorage.getItem("access_token")
-  if (!token) {
-    return null
-  }
-
-  const jwtPayload = parseJwtPayload(token)
-  if (!jwtPayload) {
-    return null
-  }
-
-  return extractNumericId(jwtPayload.user_id ?? jwtPayload.id ?? jwtPayload.sub)
-}
-
 function resolveOrderUserId(order: Record<string, unknown>): number | null {
   const nestedUser =
     order.user && typeof order.user === "object"
@@ -81,7 +43,7 @@ function resolveOrderUserId(order: Record<string, unknown>): number | null {
     extractNumericId(order.id_user) ??
     extractNumericId(nestedUser?.user_id) ??
     extractNumericId(nestedUser?.id) ??
-    resolveUserIdFromToken()
+    null
   )
 }
 
